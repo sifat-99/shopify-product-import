@@ -44,10 +44,57 @@
 
     <!-- Step 1: Store Credentials -->
     <section class="bg-[#12182B] border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-      <div class="flex items-center gap-3 mb-5">
-        <div class="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold flex items-center justify-center text-xs">1</div>
-        <h2 class="font-bold text-white text-lg">Shopify Store Connection</h2>
-        <span class="text-xs text-slate-400">Works with ANY Shopify store worldwide</span>
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold flex items-center justify-center text-xs">1</div>
+          <h2 class="font-bold text-white text-lg">Shopify Store Connection</h2>
+          <span class="text-xs text-slate-400">Works with ANY Shopify store</span>
+        </div>
+        <button type="button" id="btnToggleGuide" class="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-3 py-1.5 rounded-lg transition">
+          <span>❓ How to get Admin Token?</span>
+          <span id="guideArrow" class="text-[10px]">▼</span>
+        </button>
+      </div>
+
+      <!-- Expandable Token Guide -->
+      <div id="tokenGuideBox" class="hidden mb-6 p-5 rounded-xl bg-slate-900/90 border border-blue-500/30 text-xs space-y-4 shadow-inner">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <h4 class="font-bold text-white text-sm flex items-center gap-2">
+              <span class="text-emerald-400">🔑</span> Admin API Access Token তৈরির নিয়ম
+            </h4>
+            <p class="text-slate-400 text-xs mt-0.5">নিচের ডিরেক্ট লিংকে ক্লিক করলে সরাসরি আপনার স্টোরের অ্যাপ তৈরির পেজ ওপেন হবে:</p>
+          </div>
+          <a id="linkDirectAppDev" href="https://admin.shopify.com/store/le-velair-w6ickwvy/settings/apps/development" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-lg shadow-emerald-600/20 shrink-0">
+            <span>🔗 Open App Development in Shopify</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+
+        <ol class="grid grid-cols-1 md:grid-cols-4 gap-3 text-slate-300 pt-1">
+          <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
+            <span class="font-bold text-blue-400 block mb-1">১. অ্যাপ তৈরি করুন</span>
+            উপরের লিংকে গিয়ে <span class="text-white font-medium">"Create an app"</span> বাটনে চাপ দিন এবং নাম দিন <code class="text-emerald-300 bg-slate-800 px-1 py-0.5 rounded">Catalog Importer</code>।
+          </li>
+          <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
+            <span class="font-bold text-blue-400 block mb-1">২. পারমিশন কনফিগার করুন</span>
+            <span class="text-white font-medium">Configuration</span> ট্যাবে গিয়ে <span class="text-white font-medium">Admin API integration</span>-এর পাশে <span class="text-blue-400">Configure</span>-এ ক্লিক করুন।
+          </li>
+          <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
+            <span class="font-bold text-blue-400 block mb-1">৩. স্কোপগুলো সিলেক্ট করুন</span>
+            সার্চ করে টিক দিন:
+            <div class="mt-1.5 flex flex-wrap gap-1 font-mono text-[10px]">
+              <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">write_products</span>
+              <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">read_products</span>
+              <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">write_files</span>
+              <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">read_files</span>
+            </div>
+          </li>
+          <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
+            <span class="font-bold text-blue-400 block mb-1">৪. টোকেন কপি করুন</span>
+            Save দিয়ে <span class="text-white font-medium">API credentials</span> ট্যাবে যান ➔ <span class="text-emerald-400 font-bold">Install app</span> দিন ➔ <span class="text-white font-medium">"Reveal token once"</span>-এ ক্লিক করে <code class="text-amber-300">shpat_...</code> কপি করে আনুন!
+          </li>
+        </ol>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-12 gap-4">

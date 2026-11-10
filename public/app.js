@@ -25,6 +25,11 @@
     badgeStoreName: document.getElementById('badgeStoreName'),
     badgeStoreCurrency: document.getElementById('badgeStoreCurrency'),
 
+    btnToggleGuide: document.getElementById('btnToggleGuide'),
+    tokenGuideBox: document.getElementById('tokenGuideBox'),
+    guideArrow: document.getElementById('guideArrow'),
+    linkDirectAppDev: document.getElementById('linkDirectAppDev'),
+
     fileCsv: document.getElementById('fileCsv'),
     csvBadge: document.getElementById('csvBadge'),
     csvFileInfo: document.getElementById('csvFileInfo'),
@@ -72,6 +77,27 @@
   el.btnClearLogs.addEventListener('click', () => {
     el.consoleLog.innerHTML = '';
   });
+
+  // Toggle Admin Token Guide
+  if (el.btnToggleGuide && el.tokenGuideBox) {
+    el.btnToggleGuide.addEventListener('click', () => {
+      const isHidden = el.tokenGuideBox.classList.toggle('hidden');
+      el.guideArrow.textContent = isHidden ? '▼' : '▲';
+    });
+  }
+
+  // Dynamic store link update
+  if (el.storeDomain && el.linkDirectAppDev) {
+    el.storeDomain.addEventListener('input', () => {
+      let domain = el.storeDomain.value.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+      if (domain) {
+        const handle = domain.replace('.myshopify.com', '');
+        el.linkDirectAppDev.href = `https://admin.shopify.com/store/${handle}/settings/apps/development`;
+      } else {
+        el.linkDirectAppDev.href = 'https://admin.shopify.com/store/le-velair-w6ickwvy/settings/apps/development';
+      }
+    });
+  }
 
   // Check Ready State
   function updateReadyState() {
