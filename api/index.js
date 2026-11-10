@@ -211,7 +211,18 @@ app.post('/api/shopify/create-product', async (req, res) => {
 
     // Category and Custom Metafields
     if (Array.isArray(product.metafields) && product.metafields.length > 0) {
-      input.metafields = product.metafields;
+      input.metafields = product.metafields
+        .filter(m => m && m.key && m.value !== undefined && m.value !== null)
+        .map(m => {
+          let ns = (m.namespace || 'custom').trim();
+          if (ns === 'shopify') ns = 'custom';
+          return {
+            namespace: ns,
+            key: m.key.replace(/-/g, '_'),
+            value: String(m.value),
+            type: m.type || 'single_line_text_field'
+          };
+        });
     }
 
     // Attach file IDs (Hero, Lifestyle, Macro)

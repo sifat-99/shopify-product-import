@@ -1426,9 +1426,9 @@
               }
 
               metafields = [
-                { namespace: 'shopify', key: 'target-gender', value: 'Female', type: 'single_line_text_field' },
-                { namespace: 'shopify', key: 'age-group', value: 'Adult', type: 'single_line_text_field' },
-                { namespace: 'shopify', key: 'jewelry-material', value: '18K Gold Plated', type: 'single_line_text_field' },
+                { namespace: 'custom', key: 'target_gender', value: 'Female', type: 'single_line_text_field' },
+                { namespace: 'custom', key: 'age_group', value: 'Adult', type: 'single_line_text_field' },
+                { namespace: 'custom', key: 'material', value: '18K Gold Plated', type: 'single_line_text_field' },
                 { namespace: 'custom', key: 'finish', value: '18K Gold Plated', type: 'single_line_text_field' },
                 { namespace: 'custom', key: 'base_material', value: '316L Surgical-Grade Stainless Steel', type: 'single_line_text_field' },
                 { namespace: 'custom', key: 'waterproof', value: 'true', type: 'boolean' }
