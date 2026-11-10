@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopify Catalog Importer & CDN Stager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    pre, code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="min-h-full flex flex-col antialiased bg-[#0B0F19] text-slate-200">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-[#0E1322]/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-bold text-lg">
+          ⚡
+        </div>
+        <div>
+          <h1 class="font-bold text-base tracking-tight text-white flex items-center gap-2">
+            Shopify Catalog Importer
+            <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Enterprise</span>
+          </h1>
+          <p class="text-xs text-slate-400">Zero-Error Staged Uploads & ProductSet Pipeline</p>
+        </div>
+      </div>
+      <div id="storeBadge" class="hidden items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="badgeStoreName" class="font-medium text-white"></span>
+        <span id="badgeStoreCurrency" class="text-slate-400 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-700"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Step 1: Store Credentials -->
+    <section class="bg-[#12182B] border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold flex items-center justify-center text-xs">1</div>
+        <h2 class="font-bold text-white text-lg">Shopify Store Connection</h2>
+        <span class="text-xs text-slate-400">Works with ANY Shopify store worldwide</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div class="md:col-span-5">
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Store Domain</label>
+          <input type="text" id="storeDomain" placeholder="your-store.myshopify.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition">
+        </div>
+        <div class="md:col-span-5">
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Admin API Access Token</label>
+          <input type="password" id="storeToken" placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-sm font-mono focus:outline-none focus:border-blue-500 transition">
+        </div>
+        <div class="md:col-span-2 flex items-end">
+          <button type="button" id="btnVerify" class="w-full h-[42px] px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+            <span>Connect</span>
+          </button>
+        </div>
+      </div>
+      <p id="storeVerifyMsg" class="mt-3 text-xs hidden"></p>
+    </section>
+
+    <!-- Step 2: Upload Assets -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      <!-- Card A: Product CSV -->
+      <div class="bg-[#12182B] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 2.A</span>
+            <span id="csvBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Waiting</span>
+          </div>
+          <h3 class="font-bold text-white text-base mb-1">Product CSV</h3>
+          <p class="text-xs text-slate-400 mb-4">Shopify format CSV (Image Src can be blank)</p>
+          <label class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center transition group bg-slate-900/50">
+            <svg class="w-8 h-8 text-slate-500 group-hover:text-blue-400 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span class="text-xs font-semibold text-slate-300 group-hover:text-white">Choose CSV File</span>
+            <span class="text-[11px] text-slate-500 mt-1">.csv (e.g. pending_urls.csv)</span>
+            <input type="file" id="fileCsv" accept=".csv" class="hidden">
+          </label>
+        </div>
+        <div id="csvFileInfo" class="mt-3 text-xs text-slate-400 truncate hidden"></div>
+      </div>
+
+      <!-- Card B: Images Folder -->
+      <div class="bg-[#12182B] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 2.B</span>
+            <span id="imgBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Waiting</span>
+          </div>
+          <h3 class="font-bold text-white text-base mb-1">Product Images</h3>
+          <p class="text-xs text-slate-400 mb-4">Select folder containing product images</p>
+          <label class="border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center transition group bg-slate-900/50">
+            <svg class="w-8 h-8 text-slate-500 group-hover:text-emerald-400 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <span class="text-xs font-semibold text-slate-300 group-hover:text-white">Choose Images Folder</span>
+            <span class="text-[11px] text-slate-500 mt-1">Folders with WebP/PNG/JPG</span>
+            <input type="file" id="fileImages" webkitdirectory directory multiple class="hidden">
+          </label>
+        </div>
+        <div id="imgFolderInfo" class="mt-3 text-xs text-slate-400 truncate hidden"></div>
+      </div>
+
+      <!-- Card C: Image URL Map -->
+      <div class="bg-[#12182B] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 2.C</span>
+            <span id="mapBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Optional</span>
+          </div>
+          <h3 class="font-bold text-white text-base mb-1">Mapping CSV</h3>
+          <p class="text-xs text-slate-400 mb-4">Position map (Hero, Lifestyle, Macro)</p>
+          <label class="border-2 border-dashed border-slate-700 hover:border-purple-500 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center transition group bg-slate-900/50">
+            <svg class="w-8 h-8 text-slate-500 group-hover:text-purple-400 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            <span class="text-xs font-semibold text-slate-300 group-hover:text-white">Choose Mapping Map</span>
+            <span class="text-[11px] text-slate-500 mt-1">Auto-matches if omitted</span>
+            <input type="file" id="fileMap" accept=".csv" class="hidden">
+          </label>
+        </div>
+        <div id="mapFileInfo" class="mt-3 text-xs text-slate-400 truncate hidden"></div>
+      </div>
+
+    </section>
+
+    <!-- Step 3: Execution Controls -->
+    <section class="bg-[#12182B] border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h3 class="font-bold text-white text-base mb-1">Execution Options</h3>
+          <div class="flex items-center gap-6 mt-3 text-xs">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="chkCreateProducts" checked class="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0">
+              <span class="font-medium text-slate-200">Directly Create Products via GraphQL</span>
+            </label>
+            <label class="flex items-center gap-2">
+              <span class="text-slate-400">Default Status:</span>
+              <select id="selStatus" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
+                <option value="DRAFT" selected>DRAFT (Safe)</option>
+                <option value="ACTIVE">ACTIVE (Live)</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button type="button" id="btnStart" disabled class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-600/20 flex items-center gap-2">
+            <span>🚀 Start Import &amp; Staging</span>
+          </button>
+          <button type="button" id="btnDownloadCsv" class="hidden px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-purple-600/20 flex items-center gap-2">
+            <span>⬇ Download Enriched CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div id="progressArea" class="mt-6 hidden">
+        <div class="flex items-center justify-between text-xs mb-2">
+          <span id="progressStatus" class="text-slate-300 font-medium">Starting...</span>
+          <span id="progressPct" class="font-mono text-emerald-400 font-bold">0%</span>
+        </div>
+        <div class="w-full h-3 rounded-full bg-slate-900 overflow-hidden border border-slate-800 p-0.5">
+          <div id="progressBar" class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Real-time Terminal Logs -->
+    <section class="bg-black/80 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800/80">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+          <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
+          <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
+          <span class="text-xs font-mono text-slate-400 ml-2">Console Output</span>
+        </div>
+        <button type="button" id="btnClearLogs" class="text-[11px] text-slate-500 hover:text-slate-300">Clear</button>
+      </div>
+      <div id="consoleLog" class="font-mono text-xs space-y-1.5 max-h-80 overflow-y-auto text-slate-300 pr-2 select-text">
+        <div class="text-slate-500">[SYSTEM] Ready. Connect store and select your files to begin.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-slate-800/60 py-6 text-center text-xs text-slate-500">
+    Shopify Catalog Importer &bull; Bangladesh Software Solutions &bull; Multi-Store Compatible
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

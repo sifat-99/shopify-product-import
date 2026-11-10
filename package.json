@@ -1,0 +1,17 @@
+{
+  "name": "shopify-catalog-importer",
+  "version": "1.0.0",
+  "description": "Universal Shopify Catalog Importer & CDN Stager for any Shopify Store",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jszip": "^3.10.1",
+    "papaparse": "^5.5.2"
+  }
+}

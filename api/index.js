@@ -1,0 +1,144 @@
+// api/index.js
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const { verifyStore, createStagedUploads, createFiles, setProduct } = require('../lib/shopify');
+const { enrichCsvWithImageUrls } = require('../lib/csvHelper');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve static dashboard UI
+app.use(express.static(path.join(__dirname, '../public')));
+
+/**
+ * Health check
+ */
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', service: 'Shopify Catalog Importer' });
+});
+
+/**
+ * Verify Store credentials
+ */
+app.post('/api/shopify/verify', async (req, res) => {
+  try {
+    const { store, token } = req.body;
+    if (!store || !token) {
+      return res.status(400).json({ error: 'Store domain and Admin Access Token are required.' });
+    }
+    const shop = await verifyStore(store, token);
+    res.json({ success: true, shop });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Create Staged Upload targets for batch of images
+ */
+app.post('/api/shopify/staged-uploads', async (req, res) => {
+  try {
+    const { store, token, files } = req.body;
+    if (!store || !token || !Array.isArray(files) || files.length === 0) {
+      return res.status(400).json({ error: 'Store, token, and files array are required.' });
+    }
+    const targets = await createStagedUploads(store, token, files);
+    res.json({ success: true, targets });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Register files in Shopify Files API
+ */
+app.post('/api/shopify/files-create', async (req, res) => {
+  try {
+    const { store, token, files } = req.body;
+    if (!store || !token || !Array.isArray(files) || files.length === 0) {
+      return res.status(400).json({ error: 'Store, token, and files array are required.' });
+    }
+    const createdFiles = await createFiles(store, token, files);
+    res.json({ success: true, files: createdFiles });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Create or update product via productSet
+ */
+app.post('/api/shopify/create-product', async (req, res) => {
+  try {
+    const { store, token, product } = req.body;
+    if (!store || !token || !product || !product.handle) {
+      return res.status(400).json({ error: 'Store, token, and product object with handle are required.' });
+    }
+
+    // Build ProductSetInput
+    const input = {
+      handle: product.handle,
+      title: product.title || product.handle,
+      descriptionHtml: product.bodyHtml || '',
+      vendor: product.vendor || 'Aurelle Fine Jewelry',
+      productType: product.productType || '',
+      tags: product.tags || [],
+      status: (product.status || 'DRAFT').toUpperCase()
+    };
+
+    // Attach file IDs (Hero, Lifestyle, Macro)
+    if (Array.isArray(product.fileIds) && product.fileIds.length > 0) {
+      input.files = product.fileIds.map(id => ({ id }));
+    }
+
+    // Attach Variants if present
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      input.variants = product.variants.map((v, i) => {
+        const variantObj = {
+          price: v.price ? String(v.price) : '0.00'
+        };
+        if (v.sku) variantObj.sku = v.sku;
+        if (v.compareAtPrice) variantObj.compareAtPrice = String(v.compareAtPrice);
+        if (v.optionValues && v.optionValues.length > 0) {
+          variantObj.optionValues = v.optionValues.map(ov => ({
+            name: ov.value || ov.name,
+            optionName: ov.name
+          }));
+        }
+        return variantObj;
+      });
+    }
+
+    const result = await setProduct(store, token, input);
+    res.json({ success: true, product: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Ingest image URLs into CSV
+ */
+app.post('/api/csv/enrich', (req, res) => {
+  try {
+    const { csvString, imageMap } = req.body;
+    if (!csvString || !imageMap) {
+      return res.status(400).json({ error: 'csvString and imageMap object are required.' });
+    }
+    const enriched = enrichCsvWithImageUrls(csvString, imageMap);
+    res.json({ success: true, enrichedCsv: enriched });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Fallback to index.html for SPA
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+module.exports = app;
