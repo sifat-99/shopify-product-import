@@ -385,8 +385,8 @@
 
       <!-- Preflight Results Area (Hidden until run) -->
       <div id="preflightResults" class="hidden pt-4 border-t border-slate-200 space-y-3">
-        <!-- 4 Stat Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
+        <!-- 5 Stat Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
           <!-- Card 1: Store & Currency -->
           <div id="cardValStore" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
             <span class="text-slate-500 font-bold block text-[10px] uppercase tracking-wider">1. Store Currency</span>
@@ -394,17 +394,22 @@
           </div>
           <!-- Card 2: CSV & Columns -->
           <div id="cardValCsv" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
-            <span class="text-slate-500 font-bold block text-[10px] uppercase tracking-wider">2. CSV Structure &amp; Status</span>
+            <span class="text-slate-500 font-bold block text-[10px] uppercase tracking-wider">2. CSV Structure</span>
             <div id="statusValCsv" class="font-medium text-slate-800">Checking...</div>
           </div>
           <!-- Card 3: Images & Mapping -->
           <div id="cardValImages" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
-            <span class="text-slate-500 font-bold block text-[10px] uppercase tracking-wider">3. Images &amp; Mapping</span>
+            <span class="text-slate-500 font-bold block text-[10px] uppercase tracking-wider">3. Images &amp; Files</span>
             <div id="statusValImages" class="font-medium text-slate-800">Checking...</div>
           </div>
-          <!-- Card 4: Store Conflicts -->
+          <!-- Card 4: Collections from Folder/CSV -->
+          <div id="cardValCollections" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
+            <span class="text-slate-500 font-bold block text-[10px] uppercase tracking-wider">4. Collections Check</span>
+            <div id="statusValCollections" class="font-medium text-slate-800">Checking...</div>
+          </div>
+          <!-- Card 5: Store Conflicts -->
           <div id="cardValConflicts" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
-            <span class="text-slate-500 font-bold block text-[10px] uppercase tracking-wider">4. Product Conflicts</span>
+            <span class="text-slate-500 font-bold block text-[10px] uppercase tracking-wider">5. Product Conflicts</span>
             <div id="statusValConflicts" class="font-medium text-slate-800">Checking...</div>
           </div>
         </div>
@@ -472,6 +477,22 @@
             <span>🛡️</span>
             <span>Duplicate Protection: Existing collections are automatically reused, never duplicated.</span>
           </div>
+
+          <!-- Detected Collections from Folder / CSV -->
+          <div id="boxDetectedCollections" class="hidden mt-3 pt-3 border-t border-slate-200 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <span>📂</span> Auto-Detected Collections (<span id="detectedColCount" class="text-emerald-700 font-bold">0</span>)
+              </span>
+              <span class="text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                ✓ Ready to Map
+              </span>
+            </div>
+            <div id="detectedColList" class="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+              <!-- Dynamically populated collection items -->
+            </div>
+          </div>
+
           <div class="flex items-center gap-2 pt-1">
             <input type="text" id="inputCustomCollection" placeholder="Optional extra collection (e.g. Charms)" class="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:border-[#008060]">
             <button type="button" id="btnQuickCreateCollection" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition">

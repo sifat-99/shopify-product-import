@@ -9,6 +9,9 @@
     shopInfo: null,
     csvRaw: '',
     csvProducts: [],
+    folderCollections: new Map(), // collectionName -> Set of product names from folder
+    csvCollections: new Map(), // collectionName -> Set of product names from CSV
+    detectedCollections: new Map(), // merged: collectionName -> { source, products: Set }
     imagesMap: new Map(), // filename -> File object
     mappingData: [],
     uploadedFilesMap: new Map(), // filename -> { id, url }
@@ -81,6 +84,8 @@
     statusValCsv: document.getElementById('statusValCsv'),
     cardValImages: document.getElementById('cardValImages'),
     statusValImages: document.getElementById('statusValImages'),
+    cardValCollections: document.getElementById('cardValCollections'),
+    statusValCollections: document.getElementById('statusValCollections'),
     cardValConflicts: document.getElementById('cardValConflicts'),
     statusValConflicts: document.getElementById('statusValConflicts'),
     preflightSummaryBanner: document.getElementById('preflightSummaryBanner'),
@@ -99,6 +104,9 @@
 
     // Collection & Category Automation
     chkAutoCollections: document.getElementById('chkAutoCollections'),
+    boxDetectedCollections: document.getElementById('boxDetectedCollections'),
+    detectedColCount: document.getElementById('detectedColCount'),
+    detectedColList: document.getElementById('detectedColList'),
     inputCustomCollection: document.getElementById('inputCustomCollection'),
     btnQuickCreateCollection: document.getElementById('btnQuickCreateCollection'),
     collectionFeedback: document.getElementById('collectionFeedback'),
@@ -536,6 +544,38 @@
     }
   });
 
+  // Recursive reader for dropped directories
+  async function readEntryRecursively(entry, basePath = '') {
+    if (entry.isFile) {
+      return new Promise((resolve) => {
+        entry.file((file) => {
+          file.fullRelativePath = (basePath ? basePath + '/' : '') + file.name;
+          resolve([file]);
+        }, () => resolve([]));
+      });
+    } else if (entry.isDirectory) {
+      const dirReader = entry.createReader();
+      return new Promise((resolve) => {
+        const nestedFiles = [];
+        function readBatch() {
+          dirReader.readEntries(async (entries) => {
+            if (entries.length === 0) {
+              resolve(nestedFiles);
+            } else {
+              for (const child of entries) {
+                const results = await readEntryRecursively(child, (basePath ? basePath + '/' : '') + entry.name);
+                nestedFiles.push(...results);
+              }
+              readBatch();
+            }
+          }, () => resolve(nestedFiles));
+        }
+        readBatch();
+      });
+    }
+    return [];
+  }
+
   // Helper: Setup Drag and Drop
   function setupDropzone(dropzoneEl, fileInputEl, handler) {
     if (!dropzoneEl) return;
@@ -553,9 +593,99 @@
         dropzoneEl.classList.remove('dragover-active');
       });
     });
-    dropzoneEl.addEventListener('drop', (e) => {
+    dropzoneEl.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzoneEl.classList.remove('dragover-active');
+
+      // Check for directory entries from dataTransfer.items
+      if (e.dataTransfer && e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        const items = Array.from(e.dataTransfer.items);
+        const entries = items.map(item => item.webkitGetAsEntry ? item.webkitGetAsEntry() : null).filter(Boolean);
+        const hasDirectories = entries.some(ent => ent.isDirectory);
+
+        if (hasDirectories) {
+          const fileArrays = await Promise.all(entries.map(ent => readEntryRecursively(ent, '')));
+          const allDroppedFiles = fileArrays.flat();
+          if (allDroppedFiles.length > 0) {
+            handler(allDroppedFiles);
+            return;
+          }
+        }
+      }
+
       const files = Array.from(e.dataTransfer.files || []);
       if (files.length > 0) handler(files);
+    });
+  }
+
+  // Update UI with detected collections from Folder & CSV
+  function updateDetectedCollectionsUI() {
+    const combined = new Map();
+
+    // 1. From folder
+    state.folderCollections.forEach((prods, col) => {
+      if (!combined.has(col)) combined.set(col, { source: 'Folder', products: new Set() });
+      prods.forEach(p => combined.get(col).products.add(p));
+    });
+
+    // 2. From CSV
+    state.csvCollections.forEach((prods, col) => {
+      if (!combined.has(col)) combined.set(col, { source: 'CSV', products: new Set() });
+      else combined.get(col).source = 'Folder & CSV';
+      prods.forEach(p => combined.get(col).products.add(p));
+    });
+
+    // 3. Custom collection input if typed
+    const extra = el.inputCustomCollection ? el.inputCustomCollection.value.trim() : '';
+    if (extra && !combined.has(extra)) {
+      combined.set(extra, { source: 'Custom', products: new Set() });
+    }
+
+    state.detectedCollections = combined;
+
+    if (!el.boxDetectedCollections || !el.detectedColList) return;
+
+    if (combined.size === 0) {
+      el.boxDetectedCollections.classList.add('hidden');
+      return;
+    }
+
+    el.boxDetectedCollections.classList.remove('hidden');
+    if (el.detectedColCount) el.detectedColCount.textContent = combined.size;
+
+    el.detectedColList.innerHTML = '';
+    combined.forEach((info, colName) => {
+      const prodList = Array.from(info.products);
+      const prodSummary = prodList.length > 0 
+        ? `${prodList.length} Product${prodList.length > 1 ? 's' : ''}: ${prodList.slice(0, 3).join(', ')}${prodList.length > 3 ? '...' : ''}`
+        : 'All imported products';
+
+      const item = document.createElement('div');
+      item.className = 'p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between text-xs gap-2 transition hover:border-[#008060]';
+      item.setAttribute('data-col-name', colName);
+
+      item.innerHTML = `
+        <div class="min-w-0 flex-1">
+          <div class="font-bold text-slate-800 flex items-center gap-1.5 truncate">
+            <span class="text-emerald-700">📁</span>
+            <span class="truncate">${colName}</span>
+            <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 font-semibold border border-slate-200">${info.source}</span>
+          </div>
+          <div class="text-[11px] text-slate-500 truncate mt-0.5">${prodSummary}</div>
+        </div>
+        <span class="col-status-pill text-[10px] px-2 py-0.5 rounded font-bold shrink-0 bg-emerald-50 text-emerald-800 border border-emerald-200">
+          ✓ Auto-Assign
+        </span>
+      `;
+      el.detectedColList.appendChild(item);
+    });
+  }
+
+  // Listen to custom collection input to dynamically reflect in list
+  if (el.inputCustomCollection) {
+    el.inputCustomCollection.addEventListener('input', () => {
+      updateDetectedCollectionsUI();
     });
   }
 
@@ -567,17 +697,28 @@
       state.csvRaw = evt.target.result;
       const parsed = Papa.parse(state.csvRaw, { header: true, skipEmptyLines: 'greedy' });
       const handles = new Set();
-      parsed.data.forEach(r => { if (r['Handle']) handles.add(r['Handle'].trim()); });
+      state.csvCollections.clear();
+
+      parsed.data.forEach(r => { 
+        if (r['Handle']) handles.add(r['Handle'].trim());
+        const title = (r['Title'] || r['Handle'] || '').trim();
+        const rawCols = (r['Collection'] || r['Type'] || '').split(',').map(c => c.trim()).filter(Boolean);
+        rawCols.forEach(col => {
+          if (!state.csvCollections.has(col)) state.csvCollections.set(col, new Set());
+          if (title) state.csvCollections.get(col).add(title);
+        });
+      });
 
       state.csvProducts = Array.from(handles);
 
       el.csvBadge.textContent = `${state.csvProducts.length} Products`;
       el.csvBadge.className = 'text-[10px] px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold';
-      el.csvFileInfo.textContent = `✓ ${file.name} (${parsed.data.length} rows, ${state.csvProducts.length} unique handles)`;
+      el.csvFileInfo.textContent = `✓ ${file.name} (${parsed.data.length} rows, ${state.csvProducts.length} products, ${state.csvCollections.size} collections)`;
       el.csvFileInfo.className = 'mt-3 text-xs text-emerald-700 font-mono font-bold truncate';
       el.csvFileInfo.classList.remove('hidden');
 
-      log('SUCCESS', `Loaded Product CSV: ${file.name} with ${state.csvProducts.length} products (${parsed.data.length} total rows)`);
+      log('SUCCESS', `Loaded Product CSV: ${file.name} with ${state.csvProducts.length} products and ${state.csvCollections.size} collections from CSV.`);
+      updateDetectedCollectionsUI();
       updateReadyState();
     };
     reader.readAsText(file);
@@ -593,14 +734,36 @@
   function processImagesFiles(files) {
     if (!files || files.length === 0) return;
     state.imagesMap.clear();
+    state.folderCollections.clear();
     let validImgCount = 0;
 
     files.forEach(f => {
       const ext = f.name.split('.').pop().toLowerCase();
       if (['webp', 'png', 'jpg', 'jpeg'].includes(ext)) {
         state.imagesMap.set(f.name, f);
-        if (f.webkitRelativePath) {
-          state.imagesMap.set(f.webkitRelativePath, f);
+
+        const relPath = f.fullRelativePath || f.webkitRelativePath || '';
+        if (relPath) {
+          state.imagesMap.set(relPath, f);
+
+          // Extract collection and product from folder path
+          // e.g. "Images for Charms collection/Birth Month Charms/Emerald Puffy Star Charm/01-Hero.webp"
+          const parts = relPath.split('/').filter(Boolean);
+          if (parts.length >= 4) {
+            const colName = parts[1].trim();
+            const prodName = parts[2].trim();
+            if (colName && prodName) {
+              if (!state.folderCollections.has(colName)) state.folderCollections.set(colName, new Set());
+              state.folderCollections.get(colName).add(prodName);
+            }
+          } else if (parts.length === 3) {
+            const colName = parts[0].trim();
+            const prodName = parts[1].trim();
+            if (colName && prodName) {
+              if (!state.folderCollections.has(colName)) state.folderCollections.set(colName, new Set());
+              state.folderCollections.get(colName).add(prodName);
+            }
+          }
         }
         validImgCount++;
       }
@@ -608,11 +771,16 @@
 
     el.imgBadge.textContent = `${validImgCount} Images`;
     el.imgBadge.className = 'text-[10px] px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold';
-    el.imgFolderInfo.textContent = `✓ ${validImgCount} valid image files loaded & indexed`;
+    
+    const folderSummary = state.folderCollections.size > 0
+      ? `✓ ${validImgCount} images • ${state.folderCollections.size} collections auto-detected from folder`
+      : `✓ ${validImgCount} valid image files loaded & indexed`;
+    el.imgFolderInfo.textContent = folderSummary;
     el.imgFolderInfo.className = 'mt-3 text-xs text-emerald-700 font-mono font-bold truncate';
     el.imgFolderInfo.classList.remove('hidden');
 
-    log('SUCCESS', `Indexed ${validImgCount} images from folder.`);
+    log('SUCCESS', `Indexed ${validImgCount} images. Auto-detected ${state.folderCollections.size} collection folder(s): ${Array.from(state.folderCollections.keys()).join(', ')}`);
+    updateDetectedCollectionsUI();
     updateReadyState();
   }
 
@@ -737,6 +905,73 @@
       } catch (imgErr) {
         el.statusValImages.innerHTML = `<span class="text-rose-600 font-bold">❌ Error</span>: ${imgErr.message}`;
         allPassed = false;
+      }
+
+      // --- Check 4: Collections Validation from Folder & CSV ---
+      try {
+        const colNames = Array.from(state.detectedCollections.keys());
+        if (colNames.length > 0) {
+          let existingStoreCols = [];
+          try {
+            const colRes = await fetch('/api/shopify/collections', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ store: state.storeDomain, token: state.storeToken })
+            });
+            const colJson = await colRes.json();
+            if (colJson.success && Array.isArray(colJson.collections)) {
+              existingStoreCols = colJson.collections;
+            }
+          } catch (colFetchErr) {
+            // Non-fatal
+          }
+
+          const existingTitles = new Set(existingStoreCols.map(c => (c.title || '').trim().toLowerCase()));
+          let existingMatchCount = 0;
+          let newCreateCount = 0;
+
+          colNames.forEach(colName => {
+            const exists = existingTitles.has(colName.trim().toLowerCase());
+            if (exists) existingMatchCount++;
+            else newCreateCount++;
+
+            // Update badge on Step 4 collection card in real time
+            if (el.detectedColList) {
+              const itemEl = el.detectedColList.querySelector(`[data-col-name="${colName}"]`);
+              if (itemEl) {
+                const pill = itemEl.querySelector('.col-status-pill');
+                if (pill) {
+                  if (exists) {
+                    pill.className = 'col-status-pill text-[10px] px-2 py-0.5 rounded font-bold shrink-0 bg-emerald-100 text-emerald-900 border border-emerald-300';
+                    pill.textContent = '✓ Exists in Store (Reusing)';
+                  } else {
+                    pill.className = 'col-status-pill text-[10px] px-2 py-0.5 rounded font-bold shrink-0 bg-sky-50 text-sky-800 border border-sky-200';
+                    pill.textContent = '+ Auto-Create';
+                  }
+                }
+              }
+            }
+          });
+
+          if (el.statusValCollections) {
+            el.statusValCollections.innerHTML = `
+              <div class="text-emerald-700 font-bold">✓ ${colNames.length} Collections Ready</div>
+              <div class="text-[11px] text-slate-600 font-medium">${existingMatchCount} in store (reusing) • ${newCreateCount} new</div>
+            `;
+          }
+          log('SUCCESS', `Collections Check: ${colNames.length} collections ready (${existingMatchCount} existing in store will be reused, ${newCreateCount} will be auto-created).`);
+        } else {
+          if (el.statusValCollections) {
+            el.statusValCollections.innerHTML = `
+              <div class="text-slate-600 font-medium">None Specified</div>
+              <div class="text-[10px] text-slate-400">Products will import without collections</div>
+            `;
+          }
+        }
+      } catch (colValErr) {
+        if (el.statusValCollections) {
+          el.statusValCollections.innerHTML = `<span class="text-amber-600 font-bold">⚠️ Warning</span>: ${colValErr.message}`;
+        }
       }
 
       // --- Check 1 & 4: API Preflight (Store Currency & Existing Conflicts) ---
@@ -1042,6 +1277,11 @@
         const shouldAssignCollections = el.chkAutoCollections && el.chkAutoCollections.checked;
         if (shouldAssignCollections) {
           const namesToEnsure = new Set();
+          
+          // Include all collections auto-detected from folder
+          state.folderCollections.forEach((_, col) => namesToEnsure.add(col));
+
+          // Include collections from CSV
           parsedProducts.data.forEach(row => {
             const rawCol = row['Collection'] || row['Type'] || '';
             rawCol.split(',').forEach(c => {
@@ -1049,6 +1289,8 @@
               if (trimmed) namesToEnsure.add(trimmed);
             });
           });
+
+          // Include custom collection input if typed
           const extraCol = el.inputCustomCollection ? el.inputCustomCollection.value.trim() : '';
           if (extraCol) namesToEnsure.add(extraCol);
 
@@ -1088,8 +1330,21 @@
           const h = (row['Handle'] || '').trim();
           if (!h) return;
           if (!groupedProducts.has(h)) {
-            // Determine collections
+            // Determine collections: from CSV, folder structure, or custom input
             const rawCols = (row['Collection'] || row['Type'] || '').split(',').map(c => c.trim()).filter(Boolean);
+
+            // Auto-map from folder subfolders if matching product title or handle
+            state.folderCollections.forEach((prods, colName) => {
+              const productTitle = (row['Title'] || '').trim().toLowerCase();
+              const hasMatch = Array.from(prods).some(p => {
+                const pLow = p.toLowerCase();
+                return pLow === productTitle || h.includes(pLow.replace(/[^a-z0-9]+/g, '-'));
+              });
+              if (hasMatch && !rawCols.includes(colName)) {
+                rawCols.push(colName);
+              }
+            });
+
             const extraCol = el.inputCustomCollection ? el.inputCustomCollection.value.trim() : '';
             if (extraCol && !rawCols.includes(extraCol)) rawCols.push(extraCol);
 
