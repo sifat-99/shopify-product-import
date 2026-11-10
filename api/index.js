@@ -214,8 +214,15 @@ app.post('/api/shopify/create-product', async (req, res) => {
       input.metafields = product.metafields
         .filter(m => m && m.key && m.value !== undefined && m.value !== null)
         .map(m => {
-          let ns = (m.namespace || 'custom').trim();
-          if (ns === 'shopify') ns = 'custom';
+          const ns = (m.namespace || 'custom').trim();
+          if (ns === 'shopify') {
+            return {
+              namespace: 'shopify',
+              key: m.key, // Retain hyphenated keys like jewelry-material, jewelry-type, color-pattern
+              value: String(m.value),
+              type: m.type || 'list.metaobject_reference'
+            };
+          }
           return {
             namespace: ns,
             key: m.key.replace(/-/g, '_'),

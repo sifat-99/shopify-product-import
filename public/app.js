@@ -1556,6 +1556,11 @@
               }
 
               metafields = [
+                // Official Shopify Standard Category Metafields (auto-populates category attributes)
+                { namespace: 'shopify', key: 'jewelry-type', value: JSON.stringify(['gid://shopify/Metaobject/671038013519']), type: 'list.metaobject_reference' },
+                { namespace: 'shopify', key: 'jewelry-material', value: JSON.stringify(['gid://shopify/Metaobject/671037980751', 'gid://shopify/Metaobject/671085756495', 'gid://shopify/Metaobject/671037947983']), type: 'list.metaobject_reference' },
+                { namespace: 'shopify', key: 'color-pattern', value: JSON.stringify(['gid://shopify/Metaobject/671085690959', 'gid://shopify/Metaobject/671096176719']), type: 'list.metaobject_reference' },
+                // Store Custom Metafields
                 { namespace: 'custom', key: 'target_gender', value: 'Female', type: 'single_line_text_field' },
                 { namespace: 'custom', key: 'age_group', value: 'Adult', type: 'single_line_text_field' },
                 { namespace: 'custom', key: 'material', value: '18K Gold Plated', type: 'single_line_text_field' },
