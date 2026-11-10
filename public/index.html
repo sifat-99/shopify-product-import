@@ -466,8 +466,12 @@
             </label>
           </div>
           <p class="text-[11px] text-slate-500">
-            Reads collections from CSV or folder, automatically creates any missing collections in Shopify, and links products.
+            Reads collections from CSV or folder, automatically links products, and never creates duplicates if a collection already exists.
           </p>
+          <div class="flex items-center gap-1.5 text-[11px] text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+            <span>🛡️</span>
+            <span>Duplicate Protection: Existing collections are automatically reused, never duplicated.</span>
+          </div>
           <div class="flex items-center gap-2 pt-1">
             <input type="text" id="inputCustomCollection" placeholder="Optional extra collection (e.g. Charms)" class="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:border-[#008060]">
             <button type="button" id="btnQuickCreateCollection" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition">

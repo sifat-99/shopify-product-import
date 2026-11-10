@@ -192,10 +192,17 @@
         const data = await res.json();
         if (!res.ok || data.error) throw new Error(data.error || 'Failed to create collection');
         if (el.collectionFeedback) {
-          el.collectionFeedback.textContent = `✓ Created collection "${colName}" in Shopify!`;
+          if (data.collection && data.collection.reused) {
+            el.collectionFeedback.textContent = `✓ Collection "${colName}" already exists in Shopify! Reusing existing collection.`;
+            el.collectionFeedback.className = 'text-[11px] text-amber-700 font-bold block';
+            log('INFO', `Collection "${colName}" already exists in Shopify (Reusing ID: ${data.collection.id}) — No duplicate created.`);
+          } else {
+            el.collectionFeedback.textContent = `✓ Created collection "${colName}" in Shopify!`;
+            el.collectionFeedback.className = 'text-[11px] text-emerald-700 font-bold block';
+            log('SUCCESS', `Created new Shopify Collection: "${colName}" (ID: ${data.collection.id})`);
+          }
           el.collectionFeedback.classList.remove('hidden');
         }
-        log('SUCCESS', `Created Shopify Collection: "${colName}" (ID: ${data.collection.id})`);
       } catch (e) {
         alert('Failed: ' + e.message);
         log('ERROR', `Could not create collection: ${e.message}`);
@@ -1060,7 +1067,14 @@
               const colData = await colRes.json();
               if (colData.success && colData.collectionMap) {
                 collectionGidMap = colData.collectionMap;
-                log('SUCCESS', `Collections verified/created: ${Object.keys(collectionGidMap).join(', ')}`);
+                Object.entries(collectionGidMap).forEach(([cName, info]) => {
+                  const isReused = typeof info === 'object' && info && info.reused;
+                  if (isReused) {
+                    log('INFO', `✓ Collection "${cName}" already exists in store — Reusing existing collection.`);
+                  } else {
+                    log('SUCCESS', `+ Collection "${cName}" verified/created in store.`);
+                  }
+                });
               }
             } catch (colErr) {
               log('WARN', `Collections check warning: ${colErr.message}`);
@@ -1080,8 +1094,20 @@
             if (extraCol && !rawCols.includes(extraCol)) rawCols.push(extraCol);
 
             const assignedColGids = shouldAssignCollections
-              ? rawCols.map(name => collectionGidMap[name]).filter(Boolean)
+              ? rawCols.map(name => {
+                  const entry = collectionGidMap[name];
+                  if (!entry) return null;
+                  return typeof entry === 'object' ? entry.id : entry;
+                }).filter(Boolean)
               : [];
+
+            // Ensure collection names are present in product tags so automated/smart collections match them too
+            const productTags = (row['Tags'] || '').split(',').map(t => t.trim()).filter(Boolean);
+            if (shouldAssignCollections) {
+              rawCols.forEach(colName => {
+                if (!productTags.includes(colName)) productTags.push(colName);
+              });
+            }
 
             // Determine category & metafields
             let productCategory = (row['Product Category'] || '').trim();
@@ -1122,7 +1148,7 @@
               bodyHtml: row['Body (HTML)'] || '',
               vendor: row['Vendor'] || (state.shopInfo ? state.shopInfo.name : 'Store'),
               productType: row['Type'] || '',
-              tags: (row['Tags'] || '').split(',').map(t => t.trim()).filter(Boolean),
+              tags: productTags,
               status: el.selStatus.value,
               category: productCategory,
               collections: assignedColGids,
