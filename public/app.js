@@ -723,13 +723,26 @@
             });
           }
           if (row['Variant Price']) {
+            const optionValues = [];
+            if (row['Option1 Value']) {
+              optionValues.push({ optionName: row['Option1 Name'] || 'Title', name: row['Option1 Value'] });
+            }
+            if (row['Option2 Value']) {
+              optionValues.push({ optionName: row['Option2 Name'] || 'Option 2', name: row['Option2 Value'] });
+            }
+            if (row['Option3 Value']) {
+              optionValues.push({ optionName: row['Option3 Name'] || 'Option 3', name: row['Option3 Value'] });
+            }
+
+            if (optionValues.length === 0) {
+              optionValues.push({ optionName: 'Title', name: 'Default Title' });
+            }
+
             groupedProducts.get(h).variants.push({
               price: row['Variant Price'],
               sku: row['Variant SKU'] || '',
               compareAtPrice: row['Variant Compare At Price'] || null,
-              optionValues: [
-                row['Option1 Value'] ? { name: row['Option1 Name'] || 'Option 1', value: row['Option1 Value'] } : null
-              ].filter(Boolean)
+              optionValues: optionValues
             });
           }
         });

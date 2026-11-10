@@ -144,19 +144,48 @@ app.post('/api/shopify/create-product', async (req, res) => {
       input.files = product.fileIds.map(id => ({ id }));
     }
 
-    // Attach Variants if present
+    // Attach productOptions and variants if present
     if (Array.isArray(product.variants) && product.variants.length > 0) {
+      // Build productOptions map to satisfy Shopify GraphQL requirement
+      const optionsMap = new Map();
+
+      product.variants.forEach(v => {
+        if (Array.isArray(v.optionValues) && v.optionValues.length > 0) {
+          v.optionValues.forEach(ov => {
+            const optName = ov.optionName || ov.name || 'Title';
+            const optVal = ov.value || ov.name || 'Default Title';
+            if (!optionsMap.has(optName)) optionsMap.set(optName, new Set());
+            optionsMap.get(optName).add(optVal);
+          });
+        }
+      });
+
+      if (optionsMap.size === 0) {
+        optionsMap.set('Title', new Set(['Default Title']));
+      }
+
+      input.productOptions = Array.from(optionsMap.entries()).map(([name, valSet]) => ({
+        name: name,
+        values: Array.from(valSet).map(val => ({ name: val }))
+      }));
+
       input.variants = product.variants.map((v, i) => {
         const variantObj = {
           price: v.price ? String(v.price) : '0.00'
         };
         if (v.sku) variantObj.sku = v.sku;
         if (v.compareAtPrice) variantObj.compareAtPrice = String(v.compareAtPrice);
-        if (v.optionValues && v.optionValues.length > 0) {
+
+        if (Array.isArray(v.optionValues) && v.optionValues.length > 0) {
           variantObj.optionValues = v.optionValues.map(ov => ({
-            name: ov.value || ov.name,
-            optionName: ov.name
+            optionName: ov.optionName || ov.name || 'Title',
+            name: ov.value || ov.name || 'Default Title'
           }));
+        } else {
+          variantObj.optionValues = [{
+            optionName: 'Title',
+            name: 'Default Title'
+          }];
         }
         return variantObj;
       });
