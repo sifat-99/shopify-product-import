@@ -699,7 +699,8 @@
       const fields = parsed.meta.fields || [];
 
       // Check if user accidentally selected the Image Mapping CSV in this Product CSV slot!
-      const isMappingCsv = fields.includes('WebP Filename') || fields.includes('Archive Path') || fields.includes('Image Position') || (file.name && file.name.includes('mapping'));
+      const hasProductFields = fields.includes('Variant Price') || fields.includes('Price') || fields.includes('Body (HTML)');
+      const isMappingCsv = !hasProductFields && (fields.includes('WebP Filename') || fields.includes('Archive Path') || (file.name && file.name.toLowerCase().includes('mapping')));
       if (isMappingCsv) {
         log('WARN', `⚠️ You uploaded the Image Mapping CSV ("${file.name}") into Box 2A. Auto-assigned to Box 2C (Position Map)! Please upload "charms_collection_products.csv" here in Box 2A.`);
         processMappingFile(file);
@@ -861,7 +862,8 @@
         const fields = parsed.meta.fields || [];
 
         // Check if user uploaded mapping CSV instead of products CSV
-        const isMappingFile = fields.includes('WebP Filename') || fields.includes('Image Position') || fields.includes('Archive Path');
+        const hasProductFields = fields.includes('Variant Price') || fields.includes('Price') || fields.includes('Body (HTML)');
+        const isMappingFile = !hasProductFields && (fields.includes('WebP Filename') || fields.includes('Archive Path') || (fields.includes('Image Position') && !fields.includes('Handle')));
         if (isMappingFile) {
           el.statusValCsv.innerHTML = `
             <div class="text-rose-600 font-bold">❌ Mapping File in Slot 2A</div>
