@@ -2,7 +2,18 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { verifyStore, createStagedUploads, createFiles, setProduct, resolveShopifyDomain, checkExistingProducts } = require('../lib/shopify');
+const { 
+  verifyStore, 
+  createStagedUploads, 
+  createFiles, 
+  setProduct, 
+  resolveShopifyDomain, 
+  checkExistingProducts,
+  resolveTaxonomyCategory,
+  getCollections,
+  createCollection,
+  ensureCollections
+} = require('../lib/shopify');
 const { enrichCsvWithImageUrls } = require('../lib/csvHelper');
 
 const app = express();
@@ -119,6 +130,50 @@ app.post('/api/shopify/files-create', async (req, res) => {
 });
 
 /**
+ * Get all store collections
+ */
+app.post('/api/shopify/collections', async (req, res) => {
+  try {
+    const { store, token } = req.body;
+    if (!store || !token) return res.status(400).json({ error: 'Store and token required.' });
+    const collections = await getCollections(store, token);
+    res.json({ success: true, collections });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Create a new collection
+ */
+app.post('/api/shopify/collections/create', async (req, res) => {
+  try {
+    const { store, token, title, handle, descriptionHtml } = req.body;
+    if (!store || !token || !title) return res.status(400).json({ error: 'Store, token, and collection title are required.' });
+    const collection = await createCollection(store, token, { title, handle, descriptionHtml });
+    res.json({ success: true, collection });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Ensure an array of collection names exist (find or create on the fly)
+ */
+app.post('/api/shopify/collections/ensure', async (req, res) => {
+  try {
+    const { store, token, collections } = req.body;
+    if (!store || !token || !Array.isArray(collections)) {
+      return res.status(400).json({ error: 'Store, token, and collections array required.' });
+    }
+    const collectionMap = await ensureCollections(store, token, collections);
+    res.json({ success: true, collectionMap });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * Create or update product via productSet
  */
 app.post('/api/shopify/create-product', async (req, res) => {
@@ -133,11 +188,30 @@ app.post('/api/shopify/create-product', async (req, res) => {
       handle: product.handle,
       title: product.title || product.handle,
       descriptionHtml: product.bodyHtml || '',
-      vendor: product.vendor || 'Aurelle Fine Jewelry',
+      vendor: product.vendor || 'Jewelry',
       productType: product.productType || '',
       tags: product.tags || [],
       status: (product.status || 'DRAFT').toUpperCase()
     };
+
+    // Standard Taxonomy Category resolution
+    if (product.category) {
+      input.category = resolveTaxonomyCategory(product.category);
+    } else if (product.productCategory) {
+      input.category = resolveTaxonomyCategory(product.productCategory);
+    } else if (product.productType || product.title) {
+      input.category = resolveTaxonomyCategory(product.productType || product.title);
+    }
+
+    // Collections assignment (Array of Collection GIDs)
+    if (Array.isArray(product.collections) && product.collections.length > 0) {
+      input.collections = product.collections;
+    }
+
+    // Category and Custom Metafields
+    if (Array.isArray(product.metafields) && product.metafields.length > 0) {
+      input.metafields = product.metafields;
+    }
 
     // Attach file IDs (Hero, Lifestyle, Macro)
     if (Array.isArray(product.fileIds) && product.fileIds.length > 0) {

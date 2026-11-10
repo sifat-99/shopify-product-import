@@ -95,6 +95,13 @@
     progressPct: document.getElementById('progressPct'),
     progressBar: document.getElementById('progressBar'),
 
+    // Collection & Category Automation
+    chkAutoCollections: document.getElementById('chkAutoCollections'),
+    inputCustomCollection: document.getElementById('inputCustomCollection'),
+    btnQuickCreateCollection: document.getElementById('btnQuickCreateCollection'),
+    collectionFeedback: document.getElementById('collectionFeedback'),
+    chkAutoCategory: document.getElementById('chkAutoCategory'),
+
     // Step 5: Showcase
     showcaseSection: document.getElementById('showcaseSection'),
     showcaseCountBadge: document.getElementById('showcaseCountBadge'),
@@ -153,6 +160,47 @@
     el.btnToggleGuide.addEventListener('click', () => {
       const isHidden = el.tokenGuideBox.classList.toggle('hidden');
       el.guideArrow.textContent = isHidden ? '▼' : '▲';
+    });
+  }
+
+  // Quick Create Collection button
+  if (el.btnQuickCreateCollection && el.inputCustomCollection) {
+    el.btnQuickCreateCollection.addEventListener('click', async () => {
+      const colName = el.inputCustomCollection.value.trim();
+      if (!state.isVerified) {
+        alert('Please connect your Shopify store first in Step 1.');
+        return;
+      }
+      if (!colName) {
+        alert('Please enter a collection name.');
+        return;
+      }
+      el.btnQuickCreateCollection.disabled = true;
+      el.btnQuickCreateCollection.textContent = '...';
+      try {
+        const res = await fetch('/api/shopify/collections/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            store: state.storeDomain,
+            token: state.storeToken,
+            title: colName
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to create collection');
+        if (el.collectionFeedback) {
+          el.collectionFeedback.textContent = `✓ Created collection "${colName}" in Shopify!`;
+          el.collectionFeedback.classList.remove('hidden');
+        }
+        log('SUCCESS', `Created Shopify Collection: "${colName}" (ID: ${data.collection.id})`);
+      } catch (e) {
+        alert('Failed: ' + e.message);
+        log('ERROR', `Could not create collection: ${e.message}`);
+      } finally {
+        el.btnQuickCreateCollection.disabled = false;
+        el.btnQuickCreateCollection.textContent = '+ Create';
+      }
     });
   }
 
@@ -871,12 +919,93 @@
       if (el.chkCreateProducts.checked) {
         log('INFO', '=== Direct Product Creation in Shopify (productSet) ===');
         const parsedProducts = Papa.parse(state.finalCsvString || state.csvRaw, { header: true, skipEmptyLines: 'greedy' });
+
+        // Step D1: Auto-create/ensure Collections if checked
+        let collectionGidMap = {};
+        const shouldAssignCollections = el.chkAutoCollections && el.chkAutoCollections.checked;
+        if (shouldAssignCollections) {
+          const namesToEnsure = new Set();
+          parsedProducts.data.forEach(row => {
+            const rawCol = row['Collection'] || row['Type'] || '';
+            rawCol.split(',').forEach(c => {
+              const trimmed = c.trim();
+              if (trimmed) namesToEnsure.add(trimmed);
+            });
+          });
+          const extraCol = el.inputCustomCollection ? el.inputCustomCollection.value.trim() : '';
+          if (extraCol) namesToEnsure.add(extraCol);
+
+          if (namesToEnsure.size > 0) {
+            log('INFO', `Ensuring ${namesToEnsure.size} collection(s) in Shopify: ${Array.from(namesToEnsure).join(', ')}...`);
+            try {
+              const colRes = await fetch('/api/shopify/collections/ensure', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  store: state.storeDomain,
+                  token: state.storeToken,
+                  collections: Array.from(namesToEnsure)
+                })
+              });
+              const colData = await colRes.json();
+              if (colData.success && colData.collectionMap) {
+                collectionGidMap = colData.collectionMap;
+                log('SUCCESS', `Collections verified/created: ${Object.keys(collectionGidMap).join(', ')}`);
+              }
+            } catch (colErr) {
+              log('WARN', `Collections check warning: ${colErr.message}`);
+            }
+          }
+        }
+
         const groupedProducts = new Map();
 
         parsedProducts.data.forEach(row => {
           const h = (row['Handle'] || '').trim();
           if (!h) return;
           if (!groupedProducts.has(h)) {
+            // Determine collections
+            const rawCols = (row['Collection'] || row['Type'] || '').split(',').map(c => c.trim()).filter(Boolean);
+            const extraCol = el.inputCustomCollection ? el.inputCustomCollection.value.trim() : '';
+            if (extraCol && !rawCols.includes(extraCol)) rawCols.push(extraCol);
+
+            const assignedColGids = shouldAssignCollections
+              ? rawCols.map(name => collectionGidMap[name]).filter(Boolean)
+              : [];
+
+            // Determine category & metafields
+            let productCategory = (row['Product Category'] || '').trim();
+            let metafields = [];
+            const shouldAutoCategory = el.chkAutoCategory && el.chkAutoCategory.checked;
+
+            if (shouldAutoCategory) {
+              if (!productCategory) {
+                const text = (row['Title'] + ' ' + (row['Type'] || '')).toLowerCase();
+                if (text.includes('charm') || text.includes('locket') || text.includes('holder')) {
+                  productCategory = 'Apparel & Accessories > Jewelry > Charms & Pendants';
+                } else if (text.includes('necklace') || text.includes('chain')) {
+                  productCategory = 'Apparel & Accessories > Jewelry > Necklaces';
+                } else if (text.includes('ring')) {
+                  productCategory = 'Apparel & Accessories > Jewelry > Rings';
+                } else if (text.includes('bracelet') || text.includes('bangle')) {
+                  productCategory = 'Apparel & Accessories > Jewelry > Bracelets';
+                } else if (text.includes('earring') || text.includes('piercing')) {
+                  productCategory = 'Apparel & Accessories > Jewelry > Earrings';
+                } else {
+                  productCategory = 'Apparel & Accessories > Jewelry > Charms & Pendants';
+                }
+              }
+
+              metafields = [
+                { namespace: 'shopify', key: 'target-gender', value: 'Female', type: 'single_line_text_field' },
+                { namespace: 'shopify', key: 'age-group', value: 'Adult', type: 'single_line_text_field' },
+                { namespace: 'shopify', key: 'jewelry-material', value: '18K Gold Plated', type: 'single_line_text_field' },
+                { namespace: 'custom', key: 'finish', value: '18K Gold Plated', type: 'single_line_text_field' },
+                { namespace: 'custom', key: 'base_material', value: '316L Surgical-Grade Stainless Steel', type: 'single_line_text_field' },
+                { namespace: 'custom', key: 'waterproof', value: 'true', type: 'boolean' }
+              ];
+            }
+
             groupedProducts.set(h, {
               handle: h,
               title: row['Title'] || h,
@@ -885,6 +1014,9 @@
               productType: row['Type'] || '',
               tags: (row['Tags'] || '').split(',').map(t => t.trim()).filter(Boolean),
               status: el.selStatus.value,
+              category: productCategory,
+              collections: assignedColGids,
+              metafields: metafields,
               variants: []
             });
           }
@@ -950,7 +1082,7 @@
                 heroUrl: heroUrl
               });
 
-              log('SUCCESS', `Created Product: "${p.title}" [Handle: ${p.handle}, Status: ${p.status}, Media: ${p.fileIds.length}]`);
+              log('SUCCESS', `Created Product: "${p.title}" [Handle: ${p.handle}, Category: ${p.category ? p.category.slice(0, 24) + '...' : 'Default'}, Collections: ${p.collections ? p.collections.length : 0}, Media: ${p.fileIds.length}]`);
             } else {
               log('WARN', `Issue with product "${p.handle}": ${prodData.error}`);
             }

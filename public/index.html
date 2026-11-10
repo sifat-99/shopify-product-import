@@ -439,6 +439,56 @@
         </div>
       </div>
 
+      <!-- Advanced Category & Collection Controls -->
+      <div class="mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        
+        <!-- Collection Settings Card -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-800 flex items-center gap-1.5">
+              <span>📁</span> Auto Collection Assignment
+            </span>
+            <label class="flex items-center gap-1.5 cursor-pointer font-bold text-emerald-800">
+              <input type="checkbox" id="chkAutoCollections" checked class="rounded border-slate-300 text-[#008060] focus:ring-0">
+              <span class="text-[11px]">Enabled</span>
+            </label>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            Reads collections from CSV or folder, automatically creates any missing collections in Shopify, and links products.
+          </p>
+          <div class="flex items-center gap-2 pt-1">
+            <input type="text" id="inputCustomCollection" placeholder="Optional extra collection (e.g. Charms)" class="flex-1 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:border-[#008060]">
+            <button type="button" id="btnQuickCreateCollection" class="px-3 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition">
+              + Create
+            </button>
+          </div>
+          <p id="collectionFeedback" class="hidden text-[11px] font-mono text-emerald-700 font-bold"></p>
+        </div>
+
+        <!-- Taxonomy Category & Metafields Card -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-800 flex items-center gap-1.5">
+              <span>🏷️</span> Shopify Category Taxonomy &amp; Metafields
+            </span>
+            <label class="flex items-center gap-1.5 cursor-pointer font-bold text-emerald-800">
+              <input type="checkbox" id="chkAutoCategory" checked class="rounded border-slate-300 text-[#008060] focus:ring-0">
+              <span class="text-[11px]">Enabled</span>
+            </label>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            Fills official Shopify Product Category (never left empty in Admin) and generates Category Metafields.
+          </p>
+          <div class="flex flex-wrap items-center gap-1.5 font-mono text-[10px] pt-1">
+            <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Category: Charms &amp; Pendants</span>
+            <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-medium">Material Metafield</span>
+            <span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-medium">Target Gender</span>
+            <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">Waterproof: Yes</span>
+          </div>
+        </div>
+
+      </div>
+
       <!-- Progress Bar -->
       <div id="progressArea" class="mt-6 hidden">
         <div class="flex items-center justify-between text-xs mb-2 font-semibold">
