@@ -1176,6 +1176,7 @@
               price: row['Variant Price'],
               sku: row['Variant SKU'] || '',
               compareAtPrice: row['Variant Compare At Price'] || null,
+              inventoryQty: parseInt(row['Variant Inventory Qty'], 10) || 120,
               optionValues: optionValues
             });
           }

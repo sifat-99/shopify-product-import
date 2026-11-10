@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const { 
   verifyStore, 
+  getPrimaryLocation,
   createStagedUploads, 
   createFiles, 
   setProduct, 
@@ -218,6 +219,17 @@ app.post('/api/shopify/create-product', async (req, res) => {
       input.files = product.fileIds.map(id => ({ id }));
     }
 
+    // Fetch primary location if variants specify inventory
+    let primaryLocationId = null;
+    const hasInventory = Array.isArray(product.variants) && product.variants.some(v => v.inventoryQty);
+    if (hasInventory) {
+      try {
+        primaryLocationId = await getPrimaryLocation(store, token);
+      } catch (locErr) {
+        console.warn('Could not fetch primary location for inventory:', locErr.message);
+      }
+    }
+
     // Attach productOptions and variants if present
     if (Array.isArray(product.variants) && product.variants.length > 0) {
       // Build productOptions map to satisfy Shopify GraphQL requirement
@@ -249,6 +261,19 @@ app.post('/api/shopify/create-product', async (req, res) => {
         };
         if (v.sku) variantObj.sku = v.sku;
         if (v.compareAtPrice) variantObj.compareAtPrice = String(v.compareAtPrice);
+
+        // Populate inventory quantities if provided and location exists
+        if (v.inventoryQty && primaryLocationId) {
+          const qty = parseInt(v.inventoryQty, 10);
+          if (!isNaN(qty) && qty > 0) {
+            variantObj.inventoryItem = { tracked: true };
+            variantObj.inventoryQuantities = [{
+              locationId: primaryLocationId,
+              name: 'available',
+              quantity: qty
+            }];
+          }
+        }
 
         if (Array.isArray(v.optionValues) && v.optionValues.length > 0) {
           variantObj.optionValues = v.optionValues.map(ov => ({
