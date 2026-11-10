@@ -43,6 +43,8 @@
     storeClientSecret: document.getElementById('storeClientSecret'),
     btnVerify: document.getElementById('btnVerify'),
     storeVerifyMsg: document.getElementById('storeVerifyMsg'),
+    chkRememberAuth: document.getElementById('chkRememberAuth'),
+    btnClearSavedAuth: document.getElementById('btnClearSavedAuth'),
 
     btnToggleGuide: document.getElementById('btnToggleGuide'),
     tokenGuideBox: document.getElementById('tokenGuideBox'),
@@ -204,6 +206,91 @@
     });
   }
 
+  // Save credentials to localStorage
+  function persistCredentialsToStorage() {
+    if (!el.chkRememberAuth || !el.chkRememberAuth.checked) return;
+    try {
+      const authPayload = {
+        storeDomain: el.storeDomain ? el.storeDomain.value.trim() : '',
+        authMode: state.authMode,
+        token: el.storeToken ? el.storeToken.value.trim() : '',
+        clientId: el.storeClientId ? el.storeClientId.value.trim() : '',
+        clientSecret: el.storeClientSecret ? el.storeClientSecret.value.trim() : '',
+        savedAt: Date.now()
+      };
+      localStorage.setItem('shopify_catalog_importer_auth', JSON.stringify(authPayload));
+      if (el.btnClearSavedAuth && (authPayload.storeDomain || authPayload.token || authPayload.clientId)) {
+        el.btnClearSavedAuth.classList.remove('hidden');
+      }
+    } catch (e) {
+      console.warn('Could not save credentials to localStorage:', e);
+    }
+  }
+
+  // Load saved credentials from localStorage
+  function loadSavedCredentials() {
+    try {
+      const savedRaw = localStorage.getItem('shopify_catalog_importer_auth');
+      if (!savedRaw) return;
+      const saved = JSON.parse(savedRaw);
+      if (!saved) return;
+
+      if (saved.storeDomain && el.storeDomain) {
+        el.storeDomain.value = saved.storeDomain;
+        el.storeDomain.dispatchEvent(new Event('input'));
+      }
+
+      if (saved.authMode === 'client') {
+        if (el.btnModeClient) el.btnModeClient.click();
+        if (saved.clientId && el.storeClientId) el.storeClientId.value = saved.clientId;
+        if (saved.clientSecret && el.storeClientSecret) el.storeClientSecret.value = saved.clientSecret;
+      } else {
+        if (el.btnModeToken) el.btnModeToken.click();
+        if (saved.token && el.storeToken) el.storeToken.value = saved.token;
+      }
+
+      if (el.btnClearSavedAuth && (saved.storeDomain || saved.token || saved.clientId)) {
+        el.btnClearSavedAuth.classList.remove('hidden');
+      }
+      log('INFO', 'Loaded saved Shopify credentials from localStorage.');
+    } catch (e) {
+      console.warn('Could not load saved credentials:', e);
+    }
+  }
+
+  // Listeners to auto-persist credentials as user types
+  ['input', 'change'].forEach(evt => {
+    if (el.storeDomain) el.storeDomain.addEventListener(evt, persistCredentialsToStorage);
+    if (el.storeToken) el.storeToken.addEventListener(evt, persistCredentialsToStorage);
+    if (el.storeClientId) el.storeClientId.addEventListener(evt, persistCredentialsToStorage);
+    if (el.storeClientSecret) el.storeClientSecret.addEventListener(evt, persistCredentialsToStorage);
+  });
+
+  if (el.chkRememberAuth) {
+    el.chkRememberAuth.addEventListener('change', () => {
+      if (el.chkRememberAuth.checked) {
+        persistCredentialsToStorage();
+      } else {
+        localStorage.removeItem('shopify_catalog_importer_auth');
+        if (el.btnClearSavedAuth) el.btnClearSavedAuth.classList.add('hidden');
+      }
+    });
+  }
+
+  // Clear saved credentials button handler
+  if (el.btnClearSavedAuth) {
+    el.btnClearSavedAuth.addEventListener('click', () => {
+      localStorage.removeItem('shopify_catalog_importer_auth');
+      if (el.storeDomain) el.storeDomain.value = '';
+      if (el.storeToken) el.storeToken.value = '';
+      if (el.storeClientId) el.storeClientId.value = '';
+      if (el.storeClientSecret) el.storeClientSecret.value = '';
+      if (el.resolvedDomainInfo) el.resolvedDomainInfo.classList.add('hidden');
+      el.btnClearSavedAuth.classList.add('hidden');
+      log('INFO', 'Cleared saved store credentials from browser localStorage.');
+    });
+  }
+
   // Dynamic store link update & auto-resolve custom domains
   let resolveTimer = null;
   if (el.storeDomain && el.linkDirectAppDev) {
@@ -291,6 +378,7 @@
       el.btnModeClient.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition';
       if (el.boxModeToken) el.boxModeToken.classList.remove('hidden');
       if (el.boxModeClient) el.boxModeClient.classList.add('hidden');
+      persistCredentialsToStorage();
     });
 
     el.btnModeClient.addEventListener('click', () => {
@@ -299,6 +387,7 @@
       el.btnModeToken.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition';
       if (el.boxModeClient) el.boxModeClient.classList.remove('hidden');
       if (el.boxModeToken) el.boxModeToken.classList.add('hidden');
+      persistCredentialsToStorage();
     });
   }
 
@@ -405,6 +494,27 @@
       log('SUCCESS', `Authenticated successfully with ${data.shop.name} (${canonicalDomain}) [Currency: ${data.shop.currencyCode}, Plan: ${data.shop.plan ? data.shop.plan.displayName : 'Standard'}]`);
       if (state.authMode === 'client') {
         log('INFO', `Obtained Admin API Access Token automatically from Client Credentials!`);
+      }
+
+      // Save credentials to localStorage if checked
+      if (el.chkRememberAuth && el.chkRememberAuth.checked) {
+        try {
+          const authPayload = {
+            storeDomain: domain,
+            authMode: state.authMode,
+            token: state.authMode === 'token' ? payload.token : '',
+            clientId: state.authMode === 'client' ? payload.clientId : '',
+            clientSecret: state.authMode === 'client' ? payload.clientSecret : '',
+            savedAt: Date.now()
+          };
+          localStorage.setItem('shopify_catalog_importer_auth', JSON.stringify(authPayload));
+          if (el.btnClearSavedAuth) el.btnClearSavedAuth.classList.remove('hidden');
+        } catch (e) {
+          console.warn('Could not save credentials to localStorage:', e);
+        }
+      } else {
+        localStorage.removeItem('shopify_catalog_importer_auth');
+        if (el.btnClearSavedAuth) el.btnClearSavedAuth.classList.add('hidden');
       }
     } catch (err) {
       state.isVerified = false;
@@ -1120,5 +1230,8 @@
     URL.revokeObjectURL(url);
     log('INFO', 'Downloaded final CSV to your computer.');
   });
+
+  // Initialize and load saved credentials if available
+  loadSavedCredentials();
 
 })();
