@@ -484,9 +484,14 @@
               <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                 <span>📂</span> Auto-Detected Collections (<span id="detectedColCount" class="text-emerald-700 font-bold">0</span>)
               </span>
-              <span class="text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                ✓ Ready to Map
-              </span>
+              <div class="flex items-center gap-2">
+                <button type="button" id="btnCreateAllCollectionsNow" class="text-[10px] text-white font-bold bg-[#008060] hover:bg-[#006e52] px-2.5 py-1 rounded shadow-xs transition flex items-center gap-1 cursor-pointer">
+                  <span>⚡</span> Create All in Shopify
+                </button>
+                <span class="text-[10px] text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  ✓ Ready to Map
+                </span>
+              </div>
             </div>
             <div id="detectedColList" class="space-y-1.5 max-h-52 overflow-y-auto pr-1">
               <!-- Dynamically populated collection items -->

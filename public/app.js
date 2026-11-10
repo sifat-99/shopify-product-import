@@ -12,6 +12,7 @@
     folderCollections: new Map(), // collectionName -> Set of product names from folder
     csvCollections: new Map(), // collectionName -> Set of product names from CSV
     detectedCollections: new Map(), // merged: collectionName -> { source, products: Set }
+    existingStoreCollections: new Set(), // Set of lowercase collection titles currently in Shopify store
     imagesMap: new Map(), // filename -> File object
     mappingData: [],
     uploadedFilesMap: new Map(), // filename -> { id, url }
@@ -105,6 +106,7 @@
     // Collection & Category Automation
     chkAutoCollections: document.getElementById('chkAutoCollections'),
     boxDetectedCollections: document.getElementById('boxDetectedCollections'),
+    btnCreateAllCollectionsNow: document.getElementById('btnCreateAllCollectionsNow'),
     detectedColCount: document.getElementById('detectedColCount'),
     detectedColList: document.getElementById('detectedColList'),
     inputCustomCollection: document.getElementById('inputCustomCollection'),
@@ -217,6 +219,100 @@
       } finally {
         el.btnQuickCreateCollection.disabled = false;
         el.btnQuickCreateCollection.textContent = '+ Create';
+      }
+    });
+  }
+
+  // Create All Collections button
+  if (el.btnCreateAllCollectionsNow) {
+    el.btnCreateAllCollectionsNow.addEventListener('click', async () => {
+      if (!state.isVerified) {
+        alert('Please connect your Shopify store first in Step 1.');
+        return;
+      }
+      const colNames = Array.from(state.detectedCollections.keys());
+      if (colNames.length === 0) {
+        alert('No collections detected to create.');
+        return;
+      }
+
+      el.btnCreateAllCollectionsNow.disabled = true;
+      el.btnCreateAllCollectionsNow.innerHTML = '<span>⏳</span> Creating...';
+      log('INFO', `⚡ "Create All in Shopify": Creating and publishing ${colNames.length} collection(s)...`);
+
+      try {
+        const res = await fetch('/api/shopify/collections/ensure', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            store: state.storeDomain,
+            token: state.storeToken,
+            collections: colNames
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to ensure collections');
+
+        if (!state.existingStoreCollections) state.existingStoreCollections = new Set();
+        colNames.forEach(c => state.existingStoreCollections.add(c.trim().toLowerCase()));
+
+        updateDetectedCollectionsUI();
+        log('SUCCESS', `🎉 All ${colNames.length} collections verified/created & published in Shopify!`);
+        if (el.collectionFeedback) {
+          el.collectionFeedback.textContent = `✓ All ${colNames.length} collections verified/created in Shopify!`;
+          el.collectionFeedback.className = 'text-[11px] text-emerald-700 font-bold block';
+          el.collectionFeedback.classList.remove('hidden');
+        }
+      } catch (err) {
+        alert(`Error creating collections: ${err.message}`);
+        log('ERROR', `Could not create collections: ${err.message}`);
+      } finally {
+        el.btnCreateAllCollectionsNow.disabled = false;
+        el.btnCreateAllCollectionsNow.innerHTML = '<span>⚡</span> Create All in Shopify';
+      }
+    });
+  }
+
+  // Click handler on individual "+ Create in Store" button in detected list
+  if (el.detectedColList) {
+    el.detectedColList.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-create-single-col');
+      if (!btn) return;
+      const colName = btn.getAttribute('data-col');
+      if (!colName) return;
+
+      if (!state.isVerified) {
+        alert('Please connect your Shopify store first in Step 1.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+      log('INFO', `Creating collection "${colName}" in Shopify...`);
+
+      try {
+        const res = await fetch('/api/shopify/collections/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            store: state.storeDomain,
+            token: state.storeToken,
+            title: colName
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || 'Failed to create collection');
+
+        if (!state.existingStoreCollections) state.existingStoreCollections = new Set();
+        state.existingStoreCollections.add(colName.trim().toLowerCase());
+
+        btn.outerHTML = `<span class="col-status-pill text-[10px] px-2.5 py-1 rounded-md font-bold shrink-0 bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1">✓ In Store (Reused)</span>`;
+        log('SUCCESS', `✓ Collection "${colName}" created & published in Shopify!`);
+      } catch (err) {
+        alert(`Could not create "${colName}": ${err.message}`);
+        log('ERROR', `Failed creating "${colName}": ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = '+ Create in Store';
       }
     });
   }
@@ -415,6 +511,27 @@
     el.progressStatus.textContent = text || `Processing ${current} of ${total}...`;
   }
 
+  // Fetch store collections in background to detect existing ones
+  async function fetchStoreCollections() {
+    if (!state.storeDomain || !state.storeToken) return;
+    try {
+      const res = await fetch('/api/shopify/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ store: state.storeDomain, token: state.storeToken })
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.collections)) {
+        state.existingStoreCollections = new Set(
+          data.collections.map(c => (c.title || '').trim().toLowerCase())
+        );
+        updateDetectedCollectionsUI();
+      }
+    } catch (e) {
+      // Non-fatal
+    }
+  }
+
   // 1. Verify Store
   el.btnVerify.addEventListener('click', async () => {
     const domain = el.storeDomain.value.trim();
@@ -466,6 +583,9 @@
       state.storeToken = effectiveToken;
       state.isVerified = true;
       state.shopInfo = data.shop;
+
+      // Background-load existing store collections so detected collections know which exist
+      fetchStoreCollections();
 
       // Update link and hint with resolved handle
       const handle = canonicalDomain.replace('.myshopify.com', '');
@@ -661,6 +781,13 @@
         ? `${prodList.length} Product${prodList.length > 1 ? 's' : ''}: ${prodList.slice(0, 3).join(', ')}${prodList.length > 3 ? '...' : ''}`
         : 'All imported products';
 
+      const key = colName.trim().toLowerCase();
+      const isAlreadyInStore = state.existingStoreCollections && state.existingStoreCollections.has(key);
+
+      const statusBadge = isAlreadyInStore
+        ? `<span class="col-status-pill text-[10px] px-2.5 py-1 rounded-md font-bold shrink-0 bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1">✓ In Store (Reusing)</span>`
+        : `<button type="button" class="btn-create-single-col text-[10px] px-2.5 py-1 rounded-md font-bold shrink-0 bg-[#008060] hover:bg-[#006e52] text-white transition cursor-pointer shadow-xs" data-col="${colName}">+ Create in Store</button>`;
+
       const item = document.createElement('div');
       item.className = 'p-2.5 rounded-lg bg-white border border-slate-200 shadow-xs flex items-center justify-between text-xs gap-2 transition hover:border-[#008060]';
       item.setAttribute('data-col-name', colName);
@@ -674,9 +801,7 @@
           </div>
           <div class="text-[11px] text-slate-500 truncate mt-0.5">${prodSummary}</div>
         </div>
-        <span class="col-status-pill text-[10px] px-2 py-0.5 rounded font-bold shrink-0 bg-emerald-50 text-emerald-800 border border-emerald-200">
-          ✓ Auto-Assign
-        </span>
+        ${statusBadge}
       `;
       el.detectedColList.appendChild(item);
     });
@@ -959,6 +1084,9 @@
             const colJson = await colRes.json();
             if (colJson.success && Array.isArray(colJson.collections)) {
               existingStoreCols = colJson.collections;
+              state.existingStoreCollections = new Set(
+                existingStoreCols.map(c => (c.title || '').trim().toLowerCase())
+              );
             }
           } catch (colFetchErr) {
             // Non-fatal
