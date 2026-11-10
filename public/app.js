@@ -173,7 +173,7 @@
         const handle = val.replace('.myshopify.com', '');
         el.linkDirectAppDev.href = `https://admin.shopify.com/store/${handle}/settings/apps/development`;
         if (el.resolvedDomainInfo) {
-          el.resolvedDomainInfo.textContent = `✓ Shopify Store: ${handle}.myshopify.com`;
+          el.resolvedDomainInfo.innerHTML = `✓ Shopify Store: <span class="font-bold font-mono text-emerald-800">${handle}.myshopify.com</span>`;
           el.resolvedDomainInfo.classList.remove('hidden');
         }
       } else {
@@ -272,7 +272,8 @@
       const token = el.storeToken.value.trim();
       if (!domain || !token) {
         el.storeVerifyMsg.textContent = 'Please provide both store domain and Admin token.';
-        el.storeVerifyMsg.className = 'mt-3 text-xs text-rose-400 block';
+        el.storeVerifyMsg.className = 'text-xs text-rose-600 font-bold block';
+        el.storeVerifyMsg.classList.remove('hidden');
         return;
       }
       payload.token = token;
@@ -281,7 +282,8 @@
       const clientSecret = el.storeClientSecret.value.trim();
       if (!domain || !clientId || !clientSecret) {
         el.storeVerifyMsg.textContent = 'Please provide store domain, Client ID, and Client Secret.';
-        el.storeVerifyMsg.className = 'mt-3 text-xs text-rose-400 block';
+        el.storeVerifyMsg.className = 'text-xs text-rose-600 font-bold block';
+        el.storeVerifyMsg.classList.remove('hidden');
         return;
       }
       payload.clientId = clientId;
@@ -349,7 +351,8 @@
       }
 
       el.storeVerifyMsg.textContent = `Connected to ${data.shop.name} (${canonicalDomain} • ${data.shop.currencyCode})`;
-      el.storeVerifyMsg.className = 'mt-3 text-xs text-emerald-400 block';
+      el.storeVerifyMsg.className = 'text-xs text-emerald-700 font-bold block';
+      el.storeVerifyMsg.classList.remove('hidden');
 
       log('SUCCESS', `Authenticated successfully with ${data.shop.name} (${canonicalDomain}) [Currency: ${data.shop.currencyCode}, Plan: ${data.shop.plan ? data.shop.plan.displayName : 'Standard'}]`);
       if (state.authMode === 'client') {
@@ -358,7 +361,8 @@
     } catch (err) {
       state.isVerified = false;
       el.storeVerifyMsg.textContent = `Authentication failed: ${err.message}`;
-      el.storeVerifyMsg.className = 'mt-3 text-xs text-rose-400 block';
+      el.storeVerifyMsg.className = 'text-xs text-rose-600 font-bold block';
+      el.storeVerifyMsg.classList.remove('hidden');
       log('ERROR', `Store verification failed: ${err.message}`);
     } finally {
       el.btnVerify.disabled = false;
