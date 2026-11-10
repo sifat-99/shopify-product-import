@@ -1355,6 +1355,8 @@
                     log('SUCCESS', `+ Collection "${cName}" verified/created in store.`);
                   }
                 });
+              } else {
+                log('WARN', `Collections check warning: ${colData.error || 'Failed to auto-ensure collections'}`);
               }
             } catch (colErr) {
               log('WARN', `Collections check warning: ${colErr.message}`);
