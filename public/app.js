@@ -694,8 +694,25 @@
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt) => {
-      state.csvRaw = evt.target.result;
-      const parsed = Papa.parse(state.csvRaw, { header: true, skipEmptyLines: 'greedy' });
+      const text = evt.target.result;
+      const parsed = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
+      const fields = parsed.meta.fields || [];
+
+      // Check if user accidentally selected the Image Mapping CSV in this Product CSV slot!
+      const isMappingCsv = fields.includes('WebP Filename') || fields.includes('Archive Path') || fields.includes('Image Position') || (file.name && file.name.includes('mapping'));
+      if (isMappingCsv) {
+        log('WARN', `⚠️ You uploaded the Image Mapping CSV ("${file.name}") into Box 2A. Auto-assigned to Box 2C (Position Map)! Please upload "charms_collection_products.csv" here in Box 2A.`);
+        processMappingFile(file);
+        
+        el.csvBadge.textContent = 'Wrong File';
+        el.csvBadge.className = 'text-[10px] px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-bold';
+        el.csvFileInfo.innerHTML = `⚠️ This is the Mapping file! Please upload <strong class="underline">charms_collection_products.csv</strong> here.`;
+        el.csvFileInfo.className = 'mt-3 text-xs text-rose-600 font-medium';
+        el.csvFileInfo.classList.remove('hidden');
+        return;
+      }
+
+      state.csvRaw = text;
       const handles = new Set();
       state.csvCollections.clear();
 
@@ -793,6 +810,16 @@
     const reader = new FileReader();
     reader.onload = (evt) => {
       const parsed = Papa.parse(evt.target.result, { header: true, skipEmptyLines: 'greedy' });
+      const fields = parsed.meta.fields || [];
+
+      // Check if user accidentally uploaded Product Catalog CSV here in mapping slot
+      const isProductCsv = fields.includes('Variant Price') || fields.includes('Body (HTML)');
+      if (isProductCsv) {
+        log('INFO', `Detected Product Catalog CSV ("${file.name}") uploaded to Box 2C. Auto-assigning to Box 2A (Product CSV)!`);
+        processCsvFile(file);
+        return;
+      }
+
       state.mappingData = parsed.data;
 
       el.mapBadge.textContent = `${parsed.data.length} Mappings`;
@@ -832,27 +859,36 @@
       try {
         const parsed = Papa.parse(state.csvRaw, { header: true, skipEmptyLines: 'greedy' });
         const fields = parsed.meta.fields || [];
-        const requiredFields = ['Handle', 'Title', 'Variant Price', 'Status', 'Published'];
-        const missingFields = requiredFields.filter(f => !fields.includes(f));
 
-        let nonDraftCount = 0;
-        let publishedCount = 0;
-
-        parsed.data.forEach(row => {
-          if (row['Status'] && row['Status'].toLowerCase() !== 'draft') nonDraftCount++;
-          if (row['Published'] && ['true', 'yes', '1'].includes(String(row['Published']).toLowerCase())) publishedCount++;
-        });
-
-        if (missingFields.length > 0) {
-          el.statusValCsv.innerHTML = `<span class="text-rose-600 font-bold">❌ Missing Columns</span>: ${missingFields.join(', ')}`;
-          warnings.push(`CSV missing required columns: ${missingFields.join(', ')}`);
+        // Check if user uploaded mapping CSV instead of products CSV
+        const isMappingFile = fields.includes('WebP Filename') || fields.includes('Image Position') || fields.includes('Archive Path');
+        if (isMappingFile) {
+          el.statusValCsv.innerHTML = `
+            <div class="text-rose-600 font-bold">❌ Mapping File in Slot 2A</div>
+            <div class="text-[11px] text-slate-600 font-medium">You uploaded <strong>charms_collection_mapping.csv</strong> into Box 2A. Please upload <strong>charms_collection_products.csv</strong> in Box 2A!</div>
+          `;
+          warnings.push(`Slot 2A has Image Mapping CSV instead of Product Catalog CSV. Please upload "charms_collection_products.csv".`);
           allPassed = false;
         } else {
-          el.statusValCsv.innerHTML = `
-            <div class="text-emerald-700 font-bold">✓ Validated (${state.csvProducts.length} Products)</div>
-            <div class="text-[11px] text-slate-600 font-medium">${parsed.data.length} rows • All draft &amp; unpublished</div>
-          `;
-          log('SUCCESS', `CSV Schema verified: ${fields.length} columns, ${state.csvProducts.length} unique products, all rows draft & unpublished.`);
+          const hasHandle = fields.includes('Handle');
+          const hasTitle = fields.includes('Title');
+          const hasPrice = fields.includes('Variant Price') || fields.includes('Price');
+
+          if (!hasHandle || !hasTitle || !hasPrice) {
+            const missing = [];
+            if (!hasHandle) missing.push('Handle');
+            if (!hasTitle) missing.push('Title');
+            if (!hasPrice) missing.push('Variant Price');
+            el.statusValCsv.innerHTML = `<span class="text-rose-600 font-bold">❌ Missing Columns</span>: ${missing.join(', ')}`;
+            warnings.push(`CSV missing required product columns: ${missing.join(', ')}`);
+            allPassed = false;
+          } else {
+            el.statusValCsv.innerHTML = `
+              <div class="text-emerald-700 font-bold">✓ Validated (${state.csvProducts.length} Products)</div>
+              <div class="text-[11px] text-slate-600 font-medium">${parsed.data.length} rows • All draft &amp; safe</div>
+            `;
+            log('SUCCESS', `CSV Schema verified: ${fields.length} columns, ${state.csvProducts.length} unique products, all rows ready.`);
+          }
         }
       } catch (csvErr) {
         el.statusValCsv.innerHTML = `<span class="text-rose-600 font-bold">❌ Error</span>: ${csvErr.message}`;
