@@ -77,24 +77,41 @@
             উপরের লিংকে গিয়ে <span class="text-white font-medium">"Create an app"</span> বাটনে চাপ দিন এবং নাম দিন <code class="text-emerald-300 bg-slate-800 px-1 py-0.5 rounded">Catalog Importer</code>।
           </li>
           <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
-            <span class="font-bold text-blue-400 block mb-1">২. পারমিশন কনফিগার করুন</span>
-            <span class="text-white font-medium">Configuration</span> ট্যাবে গিয়ে <span class="text-white font-medium">Admin API integration</span>-এর পাশে <span class="text-blue-400">Configure</span>-এ ক্লিক করুন।
+            <span class="font-bold text-blue-400 block mb-1">২. স্কোপ কনফিগার (জরুরি)</span>
+            <span class="text-white font-medium">Configuration</span> ট্যাবে যান ➔ <span class="text-blue-400 font-medium">Admin API integration</span>-এর পাশে <span class="text-white font-medium">Configure</span> চাপুন ➔ <span class="text-amber-300 font-semibold">write_products, read_products, write_files, read_files</span> টিক দিয়ে <span class="text-emerald-400 font-bold">Save</span> দিন।
           </li>
           <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
-            <span class="font-bold text-blue-400 block mb-1">৩. স্কোপগুলো সিলেক্ট করুন</span>
-            সার্চ করে টিক দিন:
-            <div class="mt-1.5 flex flex-wrap gap-1 font-mono text-[10px]">
-              <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">write_products</span>
-              <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">read_products</span>
-              <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">write_files</span>
-              <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">read_files</span>
-            </div>
+            <span class="font-bold text-blue-400 block mb-1">৩. Install App দিন</span>
+            <span class="text-white font-medium">API credentials</span> ট্যাবে গিয়ে <span class="text-emerald-400 font-bold">Install app</span> বাটনে ক্লিক করুন।
           </li>
           <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
-            <span class="font-bold text-blue-400 block mb-1">৪. টোকেন কপি করুন</span>
-            Save দিয়ে <span class="text-white font-medium">API credentials</span> ট্যাবে যান ➔ <span class="text-emerald-400 font-bold">Install app</span> দিন ➔ <span class="text-white font-medium">"Reveal token once"</span>-এ ক্লিক করে <code class="text-amber-300">shpat_...</code> কপি করে আনুন!
+            <span class="font-bold text-blue-400 block mb-1">৪. Reveal Token Once!</span>
+            একদম উপরে <span class="text-white font-medium">Admin API access token</span> সেকশনে <span class="text-amber-300 font-bold">"Reveal token once"</span> বাটনে চাপ দিলেই <code class="text-emerald-300">shpat_...</code> টোকেন পাবেন। এটি কপি করুন!
           </li>
         </ol>
+
+        <!-- Troubleshooting Box -->
+        <div class="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200/90 text-xs space-y-1.5">
+          <p class="font-bold flex items-center gap-1.5 text-amber-300">
+            <span>⚠️</span> কেন আপনি শুধু Client ID এবং Client Secret দেখতে পাচ্ছেন?
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-300">
+            <li><strong>স্কোপ Save করা হয়নি:</strong> যদি ২ নম্বর ধাপে Configuration-এ গিয়ে স্কোপ Save না করে সরাসরি Install দেন, তবে Admin Access Token জেনারেট হয় না। সেক্ষেত্রে <span class="text-blue-400">Configuration</span>-এ গিয়ে পারমিশন Save করে আবার <span class="text-emerald-400">API credentials</span>-এ আসুন।</li>
+            <li><strong>Reveal Token Once মিস করেছেন:</strong> পেজের উপরে "Admin API access token"-এর পাশে থাকা <span class="text-amber-300 font-semibold">"Reveal token once"</span> বাটনে চাপ দিন। নিচের Client ID & Secret সেকশন দেখে বিভ্রান্ত হবেন না।</li>
+            <li><strong>অথবা Client Credentials ব্যবহার করুন:</strong> আপনি চাইলে সরাসরি নিচের <span class="text-blue-400 font-semibold">"Use Client ID & Secret"</span> বাটনে চাপ দিয়ে আপনার Client ID ও Client Secret ইনপুট দিয়ে কানেক্ট করতে পারেন!</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Auth Mode Toggle -->
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-xs text-slate-400 font-medium mr-1">Auth Mode:</span>
+        <button type="button" id="btnModeToken" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold shadow-sm transition">
+          Admin Token (shpat_...)
+        </button>
+        <button type="button" id="btnModeClient" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition">
+          Client ID & Secret
+        </button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -103,10 +120,25 @@
           <input type="text" id="storeDomain" placeholder="e.g. le-velair-w6ickwvy or shopify-jewelry.bssoln.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition">
           <p id="resolvedDomainInfo" class="hidden mt-1.5 text-[11px] font-mono text-emerald-400"></p>
         </div>
-        <div class="md:col-span-5">
+
+        <!-- Mode A: Admin Token -->
+        <div id="boxModeToken" class="md:col-span-5">
           <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Admin API Access Token</label>
           <input type="password" id="storeToken" placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-sm font-mono focus:outline-none focus:border-blue-500 transition">
         </div>
+
+        <!-- Mode B: Client ID & Secret -->
+        <div id="boxModeClient" class="md:col-span-5 hidden grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Client ID</label>
+            <input type="text" id="storeClientId" placeholder="Client ID / API Key" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-blue-500 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Client Secret</label>
+            <input type="password" id="storeClientSecret" placeholder="Client Secret" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-blue-500 transition">
+          </div>
+        </div>
+
         <div class="md:col-span-2 flex items-end">
           <button type="button" id="btnVerify" class="w-full h-[42px] px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
             <span>Connect</span>

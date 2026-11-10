@@ -2,6 +2,7 @@
 (function() {
   // App State
   const state = {
+    authMode: 'token', // 'token' or 'client'
     storeDomain: '',
     storeToken: '',
     isVerified: false,
@@ -19,7 +20,13 @@
   const el = {
     storeDomain: document.getElementById('storeDomain'),
     resolvedDomainInfo: document.getElementById('resolvedDomainInfo'),
+    btnModeToken: document.getElementById('btnModeToken'),
+    btnModeClient: document.getElementById('btnModeClient'),
+    boxModeToken: document.getElementById('boxModeToken'),
+    boxModeClient: document.getElementById('boxModeClient'),
     storeToken: document.getElementById('storeToken'),
+    storeClientId: document.getElementById('storeClientId'),
+    storeClientSecret: document.getElementById('storeClientSecret'),
     btnVerify: document.getElementById('btnVerify'),
     storeVerifyMsg: document.getElementById('storeVerifyMsg'),
     storeBadge: document.getElementById('storeBadge'),
@@ -139,6 +146,25 @@
     el.btnStart.disabled = !canStart;
   }
 
+  // Toggle Auth Mode (Token vs Client Credentials)
+  if (el.btnModeToken && el.btnModeClient) {
+    el.btnModeToken.addEventListener('click', () => {
+      state.authMode = 'token';
+      el.btnModeToken.className = 'text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold shadow-sm transition';
+      el.btnModeClient.className = 'text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition';
+      if (el.boxModeToken) el.boxModeToken.classList.remove('hidden');
+      if (el.boxModeClient) el.boxModeClient.classList.add('hidden');
+    });
+
+    el.btnModeClient.addEventListener('click', () => {
+      state.authMode = 'client';
+      el.btnModeClient.className = 'text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold shadow-sm transition';
+      el.btnModeToken.className = 'text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition';
+      if (el.boxModeClient) el.boxModeClient.classList.remove('hidden');
+      if (el.boxModeToken) el.boxModeToken.classList.add('hidden');
+    });
+  }
+
   // Update Progress UI
   function updateProgress(current, total, text) {
     const pct = total > 0 ? Math.round((current / total) * 100) : 0;
@@ -151,12 +177,26 @@
   // 1. Verify Store
   el.btnVerify.addEventListener('click', async () => {
     const domain = el.storeDomain.value.trim();
-    const token = el.storeToken.value.trim();
+    const payload = { store: domain };
 
-    if (!domain || !token) {
-      el.storeVerifyMsg.textContent = 'Please provide both store domain and Admin token.';
-      el.storeVerifyMsg.className = 'mt-3 text-xs text-rose-400 block';
-      return;
+    if (state.authMode === 'token') {
+      const token = el.storeToken.value.trim();
+      if (!domain || !token) {
+        el.storeVerifyMsg.textContent = 'Please provide both store domain and Admin token.';
+        el.storeVerifyMsg.className = 'mt-3 text-xs text-rose-400 block';
+        return;
+      }
+      payload.token = token;
+    } else {
+      const clientId = el.storeClientId.value.trim();
+      const clientSecret = el.storeClientSecret.value.trim();
+      if (!domain || !clientId || !clientSecret) {
+        el.storeVerifyMsg.textContent = 'Please provide store domain, Client ID, and Client Secret.';
+        el.storeVerifyMsg.className = 'mt-3 text-xs text-rose-400 block';
+        return;
+      }
+      payload.clientId = clientId;
+      payload.clientSecret = clientSecret;
     }
 
     el.btnVerify.disabled = true;
@@ -167,7 +207,7 @@
       const res = await fetch('/api/shopify/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ store: domain, token })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
 
@@ -175,10 +215,12 @@
         throw new Error(data.error || 'Failed to authenticate');
       }
 
-      // Canonical domain from Shopify API
+      // Canonical domain & effective token from Shopify API
       const canonicalDomain = data.resolvedDomain || (data.shop && data.shop.myshopifyDomain) || domain;
+      const effectiveToken = data.effectiveToken || payload.token;
+
       state.storeDomain = canonicalDomain;
-      state.storeToken = token;
+      state.storeToken = effectiveToken;
       state.isVerified = true;
       state.shopInfo = data.shop;
 
@@ -201,6 +243,9 @@
       el.storeVerifyMsg.className = 'mt-3 text-xs text-emerald-400 block';
 
       log('SUCCESS', `Authenticated successfully with ${data.shop.name} (${canonicalDomain}) [Currency: ${data.shop.currencyCode}, Plan: ${data.shop.plan ? data.shop.plan.displayName : 'Standard'}]`);
+      if (state.authMode === 'client') {
+        log('INFO', `Obtained Admin API Access Token automatically from Client Credentials!`);
+      }
     } catch (err) {
       state.isVerified = false;
       el.storeVerifyMsg.textContent = `Authentication failed: ${err.message}`;

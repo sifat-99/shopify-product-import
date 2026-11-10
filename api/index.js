@@ -40,12 +40,17 @@ app.get('/api/shopify/resolve-domain', async (req, res) => {
  */
 app.post('/api/shopify/verify', async (req, res) => {
   try {
-    const { store, token } = req.body;
-    if (!store || !token) {
-      return res.status(400).json({ error: 'Store domain and Admin Access Token are required.' });
+    const { store, token, clientId, clientSecret } = req.body;
+    if (!store || (!token && (!clientId || !clientSecret))) {
+      return res.status(400).json({ error: 'Store domain and either Admin Access Token or (Client ID + Client Secret) are required.' });
     }
-    const shop = await verifyStore(store, token);
-    res.json({ success: true, shop, resolvedDomain: shop.resolvedDomain });
+    const shop = await verifyStore(store, { token, clientId, clientSecret });
+    res.json({
+      success: true,
+      shop,
+      resolvedDomain: shop.resolvedDomain,
+      effectiveToken: shop.effectiveToken
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
