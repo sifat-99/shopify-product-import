@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { verifyStore, createStagedUploads, createFiles, setProduct } = require('../lib/shopify');
+const { verifyStore, createStagedUploads, createFiles, setProduct, resolveShopifyDomain } = require('../lib/shopify');
 const { enrichCsvWithImageUrls } = require('../lib/csvHelper');
 
 const app = express();
@@ -22,6 +22,20 @@ app.get('/api/health', (req, res) => {
 });
 
 /**
+ * Resolve domain (supports custom domains like shopify-jewelry.bssoln.com)
+ */
+app.get('/api/shopify/resolve-domain', async (req, res) => {
+  try {
+    const domain = req.query.domain;
+    if (!domain) return res.status(400).json({ error: 'Domain query parameter is required.' });
+    const resolved = await resolveShopifyDomain(domain);
+    res.json({ success: true, original: domain, resolved });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * Verify Store credentials
  */
 app.post('/api/shopify/verify', async (req, res) => {
@@ -31,7 +45,7 @@ app.post('/api/shopify/verify', async (req, res) => {
       return res.status(400).json({ error: 'Store domain and Admin Access Token are required.' });
     }
     const shop = await verifyStore(store, token);
-    res.json({ success: true, shop });
+    res.json({ success: true, shop, resolvedDomain: shop.resolvedDomain });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

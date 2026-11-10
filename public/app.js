@@ -18,6 +18,7 @@
   // DOM Elements
   const el = {
     storeDomain: document.getElementById('storeDomain'),
+    resolvedDomainInfo: document.getElementById('resolvedDomainInfo'),
     storeToken: document.getElementById('storeToken'),
     btnVerify: document.getElementById('btnVerify'),
     storeVerifyMsg: document.getElementById('storeVerifyMsg'),
@@ -86,15 +87,48 @@
     });
   }
 
-  // Dynamic store link update
+  // Dynamic store link update & auto-resolve custom domains
+  let resolveTimer = null;
   if (el.storeDomain && el.linkDirectAppDev) {
     el.storeDomain.addEventListener('input', () => {
-      let domain = el.storeDomain.value.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-      if (domain) {
-        const handle = domain.replace('.myshopify.com', '');
-        el.linkDirectAppDev.href = `https://admin.shopify.com/store/${handle}/settings/apps/development`;
-      } else {
+      let val = el.storeDomain.value.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+      clearTimeout(resolveTimer);
+
+      if (!val) {
+        if (el.resolvedDomainInfo) el.resolvedDomainInfo.classList.add('hidden');
         el.linkDirectAppDev.href = 'https://admin.shopify.com/store/le-velair-w6ickwvy/settings/apps/development';
+        return;
+      }
+
+      if (val.endsWith('.myshopify.com') || !val.includes('.')) {
+        const handle = val.replace('.myshopify.com', '');
+        el.linkDirectAppDev.href = `https://admin.shopify.com/store/${handle}/settings/apps/development`;
+        if (el.resolvedDomainInfo) {
+          el.resolvedDomainInfo.textContent = `✓ Shopify Store: ${handle}.myshopify.com`;
+          el.resolvedDomainInfo.classList.remove('hidden');
+        }
+      } else {
+        // Custom domain (e.g. shopify-jewelry.bssoln.com)
+        if (el.resolvedDomainInfo) {
+          el.resolvedDomainInfo.textContent = `Detecting Shopify handle for custom domain...`;
+          el.resolvedDomainInfo.classList.remove('hidden');
+        }
+        resolveTimer = setTimeout(async () => {
+          try {
+            const res = await fetch(`/api/shopify/resolve-domain?domain=${encodeURIComponent(val)}`);
+            const data = await res.json();
+            if (data.success && data.resolved && data.resolved.includes('.myshopify.com')) {
+              const handle = data.resolved.replace('.myshopify.com', '');
+              el.linkDirectAppDev.href = `https://admin.shopify.com/store/${handle}/settings/apps/development`;
+              if (el.resolvedDomainInfo) {
+                el.resolvedDomainInfo.innerHTML = `✓ Resolved: <span class="text-amber-300 font-bold">${data.resolved}</span>`;
+                el.resolvedDomainInfo.classList.remove('hidden');
+              }
+            }
+          } catch (e) {
+            // ignore
+          }
+        }, 600);
       }
     });
   }
@@ -141,20 +175,32 @@
         throw new Error(data.error || 'Failed to authenticate');
       }
 
-      state.storeDomain = domain;
+      // Canonical domain from Shopify API
+      const canonicalDomain = data.resolvedDomain || (data.shop && data.shop.myshopifyDomain) || domain;
+      state.storeDomain = canonicalDomain;
       state.storeToken = token;
       state.isVerified = true;
       state.shopInfo = data.shop;
+
+      // Update link and hint with resolved handle
+      const handle = canonicalDomain.replace('.myshopify.com', '');
+      if (el.linkDirectAppDev) {
+        el.linkDirectAppDev.href = `https://admin.shopify.com/store/${handle}/settings/apps/development`;
+      }
+      if (el.resolvedDomainInfo) {
+        el.resolvedDomainInfo.innerHTML = `✓ Connected Store: <span class="text-amber-300 font-bold">${canonicalDomain}</span>`;
+        el.resolvedDomainInfo.classList.remove('hidden');
+      }
 
       el.storeBadge.classList.remove('hidden');
       el.storeBadge.classList.add('flex');
       el.badgeStoreName.textContent = data.shop.name;
       el.badgeStoreCurrency.textContent = data.shop.currencyCode;
 
-      el.storeVerifyMsg.textContent = `Connected to ${data.shop.name} (${data.shop.currencyCode})`;
+      el.storeVerifyMsg.textContent = `Connected to ${data.shop.name} (${canonicalDomain} • ${data.shop.currencyCode})`;
       el.storeVerifyMsg.className = 'mt-3 text-xs text-emerald-400 block';
 
-      log('SUCCESS', `Authenticated successfully with ${data.shop.name} [Currency: ${data.shop.currencyCode}, Plan: ${data.shop.plan ? data.shop.plan.displayName : 'Standard'}]`);
+      log('SUCCESS', `Authenticated successfully with ${data.shop.name} (${canonicalDomain}) [Currency: ${data.shop.currencyCode}, Plan: ${data.shop.plan ? data.shop.plan.displayName : 'Standard'}]`);
     } catch (err) {
       state.isVerified = false;
       el.storeVerifyMsg.textContent = `Authentication failed: ${err.message}`;
