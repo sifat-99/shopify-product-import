@@ -13,11 +13,25 @@
     mappingData: [],
     uploadedFilesMap: new Map(), // filename -> { id, url }
     finalCsvString: '',
+    createdProducts: [],
     isProcessing: false
   };
 
   // DOM Elements
   const el = {
+    // Header & Global Metrics
+    storeBadge: document.getElementById('storeBadge'),
+    badgeStoreName: document.getElementById('badgeStoreName'),
+    badgeStoreCurrency: document.getElementById('badgeStoreCurrency'),
+    badgeStorePlan: document.getElementById('badgeStorePlan'),
+    btnStoreAdminLink: document.getElementById('btnStoreAdminLink'),
+
+    metricStore: document.getElementById('metricStore'),
+    metricProducts: document.getElementById('metricProducts'),
+    metricImages: document.getElementById('metricImages'),
+    metricState: document.getElementById('metricState'),
+
+    // Step 1: Authentication
     storeDomain: document.getElementById('storeDomain'),
     resolvedDomainInfo: document.getElementById('resolvedDomainInfo'),
     btnModeToken: document.getElementById('btnModeToken'),
@@ -29,27 +43,34 @@
     storeClientSecret: document.getElementById('storeClientSecret'),
     btnVerify: document.getElementById('btnVerify'),
     storeVerifyMsg: document.getElementById('storeVerifyMsg'),
-    storeBadge: document.getElementById('storeBadge'),
-    badgeStoreName: document.getElementById('badgeStoreName'),
-    badgeStoreCurrency: document.getElementById('badgeStoreCurrency'),
 
     btnToggleGuide: document.getElementById('btnToggleGuide'),
     tokenGuideBox: document.getElementById('tokenGuideBox'),
     guideArrow: document.getElementById('guideArrow'),
     linkDirectAppDev: document.getElementById('linkDirectAppDev'),
 
+    connectedDetailsCard: document.getElementById('connectedDetailsCard'),
+    detailCanonicalDomain: document.getElementById('detailCanonicalDomain'),
+    detailCurrencyCountry: document.getElementById('detailCurrencyCountry'),
+    detailPlan: document.getElementById('detailPlan'),
+
+    // Step 2: Assets
+    dropzoneCsv: document.getElementById('dropzoneCsv'),
     fileCsv: document.getElementById('fileCsv'),
     csvBadge: document.getElementById('csvBadge'),
     csvFileInfo: document.getElementById('csvFileInfo'),
 
+    dropzoneImages: document.getElementById('dropzoneImages'),
     fileImages: document.getElementById('fileImages'),
     imgBadge: document.getElementById('imgBadge'),
     imgFolderInfo: document.getElementById('imgFolderInfo'),
 
+    dropzoneMap: document.getElementById('dropzoneMap'),
     fileMap: document.getElementById('fileMap'),
     mapBadge: document.getElementById('mapBadge'),
     mapFileInfo: document.getElementById('mapFileInfo'),
 
+    // Step 3: Preflight Validation
     btnRunValidation: document.getElementById('btnRunValidation'),
     preflightResults: document.getElementById('preflightResults'),
     cardValStore: document.getElementById('cardValStore'),
@@ -63,6 +84,7 @@
     preflightSummaryBanner: document.getElementById('preflightSummaryBanner'),
     preflightDetails: document.getElementById('preflightDetails'),
 
+    // Step 4: Execution
     chkCreateProducts: document.getElementById('chkCreateProducts'),
     selStatus: document.getElementById('selStatus'),
     btnStart: document.getElementById('btnStart'),
@@ -73,19 +95,26 @@
     progressPct: document.getElementById('progressPct'),
     progressBar: document.getElementById('progressBar'),
 
+    // Step 5: Showcase
+    showcaseSection: document.getElementById('showcaseSection'),
+    showcaseCountBadge: document.getElementById('showcaseCountBadge'),
+    showcaseGrid: document.getElementById('showcaseGrid'),
+
+    // Step 6: Terminal
     consoleLog: document.getElementById('consoleLog'),
     btnClearLogs: document.getElementById('btnClearLogs')
   };
 
-  // Logger
+  // Logger with Filtering
   function log(type, msg) {
     const time = new Date().toLocaleTimeString();
     const div = document.createElement('div');
-    div.className = 'font-mono text-xs';
+    div.className = 'font-mono text-xs log-entry';
+    div.setAttribute('data-type', type);
 
     let prefix = `<span class="text-slate-500">[${time}]</span> `;
     if (type === 'SUCCESS') prefix += `<span class="text-emerald-400 font-bold">[SUCCESS]</span> `;
-    else if (type === 'INFO') prefix += `<span class="text-blue-400 font-bold">[INFO]</span> `;
+    else if (type === 'INFO') prefix += `<span class="text-gold-400 font-bold">[INFO]</span> `;
     else if (type === 'WARN') prefix += `<span class="text-amber-400 font-bold">[WARN]</span> `;
     else if (type === 'ERROR') prefix += `<span class="text-rose-400 font-bold">[ERROR]</span> `;
     else prefix += `<span class="text-slate-400">[SYSTEM]</span> `;
@@ -96,7 +125,27 @@
   }
 
   el.btnClearLogs.addEventListener('click', () => {
-    el.consoleLog.innerHTML = '';
+    el.consoleLog.innerHTML = '<div class="text-slate-500">// Terminal cleared.</div>';
+  });
+
+  // Log filter tabs
+  document.querySelectorAll('.log-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const filter = btn.getAttribute('data-filter');
+      document.querySelectorAll('.log-filter-btn').forEach(b => {
+        b.className = 'log-filter-btn px-2 py-0.5 rounded hover:bg-slate-800 text-slate-400 transition';
+      });
+      btn.className = 'log-filter-btn px-2 py-0.5 rounded bg-gold-500 text-onyx-950 font-bold shadow transition';
+
+      const entries = el.consoleLog.querySelectorAll('.log-entry');
+      entries.forEach(entry => {
+        if (filter === 'ALL' || entry.getAttribute('data-type') === filter) {
+          entry.style.display = 'block';
+        } else {
+          entry.style.display = 'none';
+        }
+      });
+    });
   });
 
   // Toggle Admin Token Guide
@@ -141,7 +190,7 @@
               const handle = data.resolved.replace('.myshopify.com', '');
               el.linkDirectAppDev.href = `https://admin.shopify.com/store/${handle}/settings/apps/development`;
               if (el.resolvedDomainInfo) {
-                el.resolvedDomainInfo.innerHTML = `✓ Resolved: <span class="text-amber-300 font-bold">${data.resolved}</span>`;
+                el.resolvedDomainInfo.innerHTML = `✓ Resolved: <span class="text-gold-400 font-bold font-mono">${data.resolved}</span>`;
                 el.resolvedDomainInfo.classList.remove('hidden');
               }
             }
@@ -153,7 +202,7 @@
     });
   }
 
-  // Check Ready State
+  // Check Ready State & Update Metric Strip
   function updateReadyState() {
     const hasAssets = state.csvProducts.length > 0 && state.imagesMap.size > 0;
     const canValidate = state.isVerified && hasAssets && !state.isProcessing;
@@ -161,22 +210,45 @@
 
     const canStart = state.isVerified && hasAssets && !state.isProcessing;
     el.btnStart.disabled = !canStart;
+
+    // Update Metric Strip
+    if (el.metricProducts) {
+      el.metricProducts.textContent = `${state.csvProducts.length} Products (${state.csvRaw ? Papa.parse(state.csvRaw, { header: true }).data.length : 0} Rows)`;
+    }
+    if (el.metricImages) {
+      el.metricImages.textContent = `${state.imagesMap.size} Images Loaded`;
+    }
+    if (el.metricState) {
+      if (!state.isVerified) {
+        el.metricState.textContent = 'Step 1: Connect Store';
+        el.metricState.className = 'font-medium text-amber-400';
+      } else if (!hasAssets) {
+        el.metricState.textContent = 'Step 2: Upload Assets';
+        el.metricState.className = 'font-medium text-blue-400';
+      } else if (state.isProcessing) {
+        el.metricState.textContent = 'Pipeline In Progress...';
+        el.metricState.className = 'font-medium text-gold-400 animate-pulse';
+      } else {
+        el.metricState.textContent = 'Ready for Validation / Import';
+        el.metricState.className = 'font-medium text-emerald-400 font-bold';
+      }
+    }
   }
 
   // Toggle Auth Mode (Token vs Client Credentials)
   if (el.btnModeToken && el.btnModeClient) {
     el.btnModeToken.addEventListener('click', () => {
       state.authMode = 'token';
-      el.btnModeToken.className = 'text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold shadow-sm transition';
-      el.btnModeClient.className = 'text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition';
+      el.btnModeToken.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-gold-500 text-onyx-950 font-bold shadow-md shadow-gold-500/20 transition';
+      el.btnModeClient.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-onyx-800 hover:bg-onyx-750 text-slate-300 font-medium transition';
       if (el.boxModeToken) el.boxModeToken.classList.remove('hidden');
       if (el.boxModeClient) el.boxModeClient.classList.add('hidden');
     });
 
     el.btnModeClient.addEventListener('click', () => {
       state.authMode = 'client';
-      el.btnModeClient.className = 'text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold shadow-sm transition';
-      el.btnModeToken.className = 'text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition';
+      el.btnModeClient.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-gold-500 text-onyx-950 font-bold shadow-md shadow-gold-500/20 transition';
+      el.btnModeToken.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-onyx-800 hover:bg-onyx-750 text-slate-300 font-medium transition';
       if (el.boxModeClient) el.boxModeClient.classList.remove('hidden');
       if (el.boxModeToken) el.boxModeToken.classList.add('hidden');
     });
@@ -246,15 +318,35 @@
       if (el.linkDirectAppDev) {
         el.linkDirectAppDev.href = `https://admin.shopify.com/store/${handle}/settings/apps/development`;
       }
+      if (el.btnStoreAdminLink) {
+        el.btnStoreAdminLink.href = `https://admin.shopify.com/store/${handle}`;
+        el.btnStoreAdminLink.classList.remove('hidden');
+      }
+
       if (el.resolvedDomainInfo) {
-        el.resolvedDomainInfo.innerHTML = `✓ Connected Store: <span class="text-amber-300 font-bold">${canonicalDomain}</span>`;
+        el.resolvedDomainInfo.innerHTML = `✓ Connected Store: <span class="text-gold-400 font-bold font-mono">${canonicalDomain}</span>`;
         el.resolvedDomainInfo.classList.remove('hidden');
       }
 
+      // Top badges & metric strip
       el.storeBadge.classList.remove('hidden');
       el.storeBadge.classList.add('flex');
       el.badgeStoreName.textContent = data.shop.name;
       el.badgeStoreCurrency.textContent = data.shop.currencyCode;
+      el.badgeStorePlan.textContent = (data.shop.plan ? data.shop.plan.displayName : 'Custom');
+
+      if (el.metricStore) {
+        el.metricStore.textContent = `${data.shop.name} (${data.shop.currencyCode})`;
+      }
+
+      // Connected Details Card
+      if (el.connectedDetailsCard) {
+        el.connectedDetailsCard.classList.remove('hidden');
+        el.detailCanonicalDomain.textContent = canonicalDomain;
+        const country = data.shop.billingAddress ? data.shop.billingAddress.country : 'Configured';
+        el.detailCurrencyCountry.textContent = `${data.shop.currencyCode} (${country})`;
+        el.detailPlan.textContent = data.shop.plan ? data.shop.plan.displayName : 'Standard Plan';
+      }
 
       el.storeVerifyMsg.textContent = `Connected to ${data.shop.name} (${canonicalDomain} • ${data.shop.currencyCode})`;
       el.storeVerifyMsg.className = 'mt-3 text-xs text-emerald-400 block';
@@ -275,11 +367,32 @@
     }
   });
 
-  // 2. Select Product CSV
-  el.fileCsv.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Helper: Setup Drag and Drop
+  function setupDropzone(dropzoneEl, fileInputEl, handler) {
+    if (!dropzoneEl) return;
+    ['dragenter', 'dragover'].forEach(evtName => {
+      dropzoneEl.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzoneEl.classList.add('dragover-active');
+      });
+    });
+    ['dragleave', 'drop'].forEach(evtName => {
+      dropzoneEl.addEventListener(evtName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzoneEl.classList.remove('dragover-active');
+      });
+    });
+    dropzoneEl.addEventListener('drop', (e) => {
+      const files = Array.from(e.dataTransfer.files || []);
+      if (files.length > 0) handler(files);
+    });
+  }
 
+  // 2. Select / Drop Product CSV
+  function processCsvFile(file) {
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt) => {
       state.csvRaw = evt.target.result;
@@ -290,28 +403,31 @@
       state.csvProducts = Array.from(handles);
 
       el.csvBadge.textContent = `${state.csvProducts.length} Products`;
-      el.csvBadge.className = 'text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold';
-      el.csvFileInfo.textContent = `${file.name} (${parsed.data.length} rows, ${state.csvProducts.length} unique handles)`;
+      el.csvBadge.className = 'text-[10px] px-2 py-0.5 rounded-md bg-gold-500/10 text-gold-400 border border-gold-500/30 font-bold';
+      el.csvFileInfo.textContent = `✓ ${file.name} (${parsed.data.length} rows, ${state.csvProducts.length} unique handles)`;
       el.csvFileInfo.classList.remove('hidden');
 
       log('SUCCESS', `Loaded Product CSV: ${file.name} with ${state.csvProducts.length} products (${parsed.data.length} total rows)`);
       updateReadyState();
     };
     reader.readAsText(file);
+  }
+
+  el.fileCsv.addEventListener('change', (e) => processCsvFile(e.target.files[0]));
+  setupDropzone(el.dropzoneCsv, el.fileCsv, (files) => {
+    const csvFile = files.find(f => f.name.endsWith('.csv'));
+    if (csvFile) processCsvFile(csvFile);
   });
 
-  // 3. Select Product Images Folder
-  el.fileImages.addEventListener('change', (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
+  // 3. Select / Drop Product Images Folder
+  function processImagesFiles(files) {
+    if (!files || files.length === 0) return;
     state.imagesMap.clear();
     let validImgCount = 0;
 
     files.forEach(f => {
       const ext = f.name.split('.').pop().toLowerCase();
       if (['webp', 'png', 'jpg', 'jpeg'].includes(ext)) {
-        // Map by filename and by relative path
         state.imagesMap.set(f.name, f);
         if (f.webkitRelativePath) {
           state.imagesMap.set(f.webkitRelativePath, f);
@@ -321,32 +437,39 @@
     });
 
     el.imgBadge.textContent = `${validImgCount} Images`;
-    el.imgBadge.className = 'text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold';
-    el.imgFolderInfo.textContent = `${validImgCount} valid image files loaded from folder selection`;
+    el.imgBadge.className = 'text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold';
+    el.imgFolderInfo.textContent = `✓ ${validImgCount} valid image files loaded & indexed`;
     el.imgFolderInfo.classList.remove('hidden');
 
-    log('SUCCESS', `Indexed ${validImgCount} images from local folder.`);
+    log('SUCCESS', `Indexed ${validImgCount} images from folder.`);
     updateReadyState();
-  });
+  }
 
-  // 4. Select Mapping CSV (Optional)
-  el.fileMap.addEventListener('change', (e) => {
-    const file = e.target.files[0];
+  el.fileImages.addEventListener('change', (e) => processImagesFiles(Array.from(e.target.files || [])));
+  setupDropzone(el.dropzoneImages, el.fileImages, (files) => processImagesFiles(files));
+
+  // 4. Select / Drop Mapping CSV (Optional)
+  function processMappingFile(file) {
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (evt) => {
       const parsed = Papa.parse(evt.target.result, { header: true, skipEmptyLines: 'greedy' });
       state.mappingData = parsed.data;
 
       el.mapBadge.textContent = `${parsed.data.length} Mappings`;
-      el.mapBadge.className = 'text-[10px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold';
-      el.mapFileInfo.textContent = `${file.name} (${parsed.data.length} position mappings)`;
+      el.mapBadge.className = 'text-[10px] px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/30 font-bold';
+      el.mapFileInfo.textContent = `✓ ${file.name} (${parsed.data.length} position mappings)`;
       el.mapFileInfo.classList.remove('hidden');
 
       log('INFO', `Loaded Image Position Mapping CSV: ${file.name} (${parsed.data.length} entries)`);
     };
     reader.readAsText(file);
+  }
+
+  el.fileMap.addEventListener('change', (e) => processMappingFile(e.target.files[0]));
+  setupDropzone(el.dropzoneMap, el.fileMap, (files) => {
+    const mapFile = files.find(f => f.name.endsWith('.csv'));
+    if (mapFile) processMappingFile(mapFile);
   });
 
   // Preflight Validation Handler
@@ -411,7 +534,6 @@
             else missingImages.push(fname || `Row for ${row['Handle']}`);
           });
         } else {
-          // Smart match
           state.csvProducts.forEach(handle => {
             [1, 2, 3].forEach(pos => {
               let found = false;
@@ -535,7 +657,6 @@
   // Helper: Direct Upload to S3/GCS Target
   async function uploadToStagedTarget(target, file) {
     const formData = new FormData();
-    // Append all signed parameters from Shopify
     target.parameters.forEach(p => {
       formData.append(p.name, p.value);
     });
@@ -552,23 +673,70 @@
     return target.resourceUrl;
   }
 
+  // Render Showcase Cards
+  function renderShowcase() {
+    if (!el.showcaseSection || !el.showcaseGrid) return;
+    if (state.createdProducts.length === 0) return;
+
+    el.showcaseSection.classList.remove('hidden');
+    el.showcaseCountBadge.textContent = `${state.createdProducts.length} Items Imported`;
+    el.showcaseGrid.innerHTML = '';
+
+    const handle = state.storeDomain.replace('.myshopify.com', '');
+
+    state.createdProducts.forEach(prod => {
+      const card = document.createElement('div');
+      card.className = 'bg-onyx-850 border border-gold-subtle rounded-xl p-3.5 flex flex-col justify-between hover:border-gold-500/50 transition group shadow-md';
+      
+      const adminLink = prod.numericId
+        ? `https://admin.shopify.com/store/${handle}/products/${prod.numericId}`
+        : `https://admin.shopify.com/store/${handle}/products`;
+
+      card.innerHTML = `
+        <div>
+          <div class="aspect-square w-full rounded-lg overflow-hidden bg-onyx-900 border border-slate-800 mb-3 relative flex items-center justify-center">
+            ${prod.heroUrl 
+              ? `<img src="${prod.heroUrl}" alt="${prod.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">`
+              : `<span class="text-slate-600 text-xs font-mono">No Image</span>`}
+            <span class="absolute top-2 right-2 text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${prod.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-gold-500/20 text-gold-300 border border-gold-500/30'}">
+              ${prod.status}
+            </span>
+          </div>
+          <h4 class="font-serif font-bold text-white text-base group-hover:text-gold-300 transition line-clamp-1">${prod.title}</h4>
+          <p class="text-[11px] font-mono text-slate-400 truncate mb-1">Handle: ${prod.handle}</p>
+          <div class="text-sm font-bold text-gold-400 font-mono">€${prod.price} <span class="text-[10px] text-slate-500">${prod.currency}</span></div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+          <span class="text-[10px] text-slate-500 font-mono">3 Images Attached</span>
+          <a href="${adminLink}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300 font-semibold transition">
+            <span>View in Admin</span>
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          </a>
+        </div>
+      `;
+      el.showcaseGrid.appendChild(card);
+    });
+  }
+
   // 5. Start Staged Uploads & Import Pipeline
   el.btnStart.addEventListener('click', async () => {
     if (!state.isVerified || state.isProcessing) return;
 
     state.isProcessing = true;
+    state.createdProducts = [];
     el.btnStart.disabled = true;
     el.btnDownloadCsv.classList.add('hidden');
+    if (el.showcaseSection) el.showcaseSection.classList.add('hidden');
+    updateReadyState();
 
     log('INFO', '=== Starting Staged Uploads & Processing Pipeline ===');
 
     try {
       // Step A: Determine all unique images needed
       const imagesToUpload = [];
-      const imageKeyToFilename = new Map(); // "handle_position" -> filename
+      const imageKeyToFilename = new Map();
 
       if (state.mappingData.length > 0) {
-        // Use mapping CSV
         state.mappingData.forEach(row => {
           const handle = (row['Handle'] || '').trim();
           const pos = parseInt(row['Image Position'] || '1', 10);
@@ -582,10 +750,8 @@
           }
         });
       } else {
-        // Fallback: Smart matching by product handle/title in folder
         state.csvProducts.forEach(handle => {
           [1, 2, 3].forEach(pos => {
-            // Check common naming patterns: [handle]_[pos], [handle]_0[pos]
             for (const [fname, fileObj] of state.imagesMap.entries()) {
               if (fname.includes(handle) && (fname.includes(`_0${pos}`) || fname.includes(`_${pos}`))) {
                 imagesToUpload.push({ filename: fname, file: fileObj });
@@ -614,9 +780,9 @@
 
       log('INFO', `Identified ${uniqueFiles.length} unique images to stage and upload to Shopify CDN.`);
 
-      // Step B: Upload Images in Batches of 5 to avoid Shopify rate limits
+      // Step B: Upload Images in Batches of 5
       const BATCH_SIZE = 5;
-      const uploadedFileResults = new Map(); // filename -> { id, url }
+      const uploadedFileResults = new Map();
 
       for (let i = 0; i < uniqueFiles.length; i += BATCH_SIZE) {
         const batch = uniqueFiles.slice(i, i + BATCH_SIZE);
@@ -673,7 +839,7 @@
 
       // Step C: Build Image Map { "handle_position": cdnUrl } & enrich CSV
       const imageMapForCsv = {};
-      const productFileIdsMap = new Map(); // handle -> [fileId1, fileId2, fileId3]
+      const productFileIdsMap = new Map();
 
       imageKeyToFilename.forEach((filename, mapKey) => {
         const fileData = uploadedFileResults.get(filename);
@@ -715,7 +881,7 @@
               handle: h,
               title: row['Title'] || h,
               bodyHtml: row['Body (HTML)'] || '',
-              vendor: row['Vendor'] || 'Aurelle Fine Jewelry',
+              vendor: row['Vendor'] || 'Le Velair Atelier',
               productType: row['Type'] || 'Jewellery',
               tags: (row['Tags'] || '').split(',').map(t => t.trim()).filter(Boolean),
               status: el.selStatus.value,
@@ -769,6 +935,21 @@
             });
             const prodData = await prodRes.json();
             if (prodData.success) {
+              const prod = prodData.product;
+              const numId = (prod.id || '').replace('gid://shopify/Product/', '');
+              const heroUrl = imageMapForCsv[p.handle + '_1'] || '';
+
+              state.createdProducts.push({
+                id: prod.id,
+                numericId: numId,
+                title: prod.title || p.title,
+                handle: prod.handle || p.handle,
+                status: prod.status || p.status,
+                price: p.variants && p.variants[0] ? p.variants[0].price : '0.00',
+                currency: state.shopInfo ? state.shopInfo.currencyCode : 'EUR',
+                heroUrl: heroUrl
+              });
+
               log('SUCCESS', `Created Product: "${p.title}" [Handle: ${p.handle}, Status: ${p.status}, Media: ${p.fileIds.length}]`);
             } else {
               log('WARN', `Issue with product "${p.handle}": ${prodData.error}`);
@@ -777,17 +958,19 @@
             log('ERROR', `Failed creating "${p.handle}": ${pErr.message}`);
           }
         }
-        log('SUCCESS', `Finished creating ${productList.length} products in ${state.storeDomain}!`);
+        log('SUCCESS', `Finished creating ${state.createdProducts.length} products in ${state.storeDomain}!`);
+        renderShowcase();
       }
 
       updateProgress(100, 100, 'Processing Complete! All products & images are staged.');
-      log('SUCCESS', '🎉 PIPELINE COMPLETE! You can now download the enriched CSV or view products in your Shopify Admin.');
+      log('SUCCESS', '🎉 PIPELINE COMPLETE! Products created, images hosted, enriched CSV ready for download.');
 
     } catch (err) {
       log('ERROR', `Pipeline error: ${err.message}`);
     } finally {
       state.isProcessing = false;
       el.btnStart.disabled = false;
+      updateReadyState();
     }
   });
 

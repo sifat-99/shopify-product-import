@@ -1,227 +1,380 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<html lang="en" class="h-full bg-[#08080A] text-slate-100">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shopify Catalog Importer & CDN Stager</title>
+  <title>Le Velair — Shopify Catalog & Media Importer</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: {
+              50: '#FDFBF7',
+              100: '#FAF4E8',
+              200: '#F4E6CB',
+              300: '#E8D0A4',
+              400: '#DCB777',
+              500: '#C5A059', // Le Velair primary gold
+              600: '#B48A4C',
+              700: '#8E6934',
+              800: '#6C4E24',
+              900: '#4D3618',
+            },
+            onyx: {
+              950: '#070708',
+              900: '#0C0D10',
+              850: '#111317',
+              800: '#16191F',
+              750: '#1C2028',
+              700: '#232934',
+            }
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    pre, code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+    /* Custom Luxury Styling */
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #171512 0%, #0A0A0C 65%, #060607 100%);
+    }
+    .font-serif { font-family: 'Cormorant Garamond', Georgia, serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    
+    /* Subtle Gold Hairlines */
+    .border-gold-subtle { border-color: rgba(197, 160, 89, 0.18); }
+    .border-gold-hover:hover { border-color: rgba(197, 160, 89, 0.45); }
+    
+    /* Custom Scrollbar for Terminal */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0c0d10; }
+    ::-webkit-scrollbar-thumb { background: #232934; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #C5A059; }
+
+    /* Dropzone animation */
+    .dragover-active {
+      border-color: #C5A059 !important;
+      background-color: rgba(197, 160, 89, 0.08) !important;
+      transform: scale(1.01);
+    }
   </style>
 </head>
-<body class="min-h-full flex flex-col antialiased bg-[#0B0F19] text-slate-200">
+<body class="min-h-full flex flex-col antialiased text-slate-200">
 
   <!-- Header -->
-  <header class="border-b border-slate-800 bg-[#0E1322]/80 backdrop-blur sticky top-0 z-40">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-bold text-lg">
-          ⚡
+  <header class="border-b border-gold-subtle bg-onyx-950/90 backdrop-blur sticky top-0 z-50 transition">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-gold-400 via-gold-500 to-gold-700 p-[1px] shadow-lg shadow-gold-500/15">
+          <div class="w-full h-full bg-onyx-900 rounded-[11px] flex items-center justify-center">
+            <span class="text-gold-400 font-serif text-2xl font-bold tracking-tight">LV</span>
+          </div>
         </div>
         <div>
-          <h1 class="font-bold text-base tracking-tight text-white flex items-center gap-2">
-            Shopify Catalog Importer
-            <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Enterprise</span>
-          </h1>
-          <p class="text-xs text-slate-400">Zero-Error Staged Uploads & ProductSet Pipeline</p>
+          <div class="flex items-center gap-2">
+            <h1 class="font-serif text-xl sm:text-2xl font-semibold tracking-wide text-white">Le Velair Atelier</h1>
+            <span class="text-[9px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-gold-500/10 text-gold-400 border border-gold-500/30">Catalog Importer</span>
+          </div>
+          <p class="text-[11px] sm:text-xs text-slate-400 tracking-wider">Enterprise Staged Uploads • CDN Media Pipeline • GraphQL productSet</p>
         </div>
       </div>
-      <div id="storeBadge" class="hidden items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span id="badgeStoreName" class="font-medium text-white"></span>
-        <span id="badgeStoreCurrency" class="text-slate-400 font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-700"></span>
+
+      <!-- Live Store Indicator -->
+      <div class="flex items-center gap-3">
+        <div id="storeBadge" class="hidden items-center gap-2 px-3 py-1.5 rounded-xl bg-onyx-850 border border-gold-subtle text-xs shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div class="text-left">
+            <div id="badgeStoreName" class="font-semibold text-white leading-tight"></div>
+            <div class="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
+              <span id="badgeStoreCurrency" class="text-gold-400 font-bold"></span>
+              <span>•</span>
+              <span id="badgeStorePlan"></span>
+            </div>
+          </div>
+        </div>
+
+        <a id="btnStoreAdminLink" href="https://admin.shopify.com" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-onyx-800 hover:bg-onyx-700 text-slate-300 hover:text-white border border-slate-700/60 text-xs font-medium transition">
+          <span>Shopify Admin</span>
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+  <!-- Metric Overview Strip -->
+  <section class="border-b border-slate-800/80 bg-onyx-900/60 py-3">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        <div class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-onyx-850/70 border border-slate-800">
+          <span class="text-gold-400 text-base">🏪</span>
+          <div>
+            <span class="text-[10px] uppercase text-slate-400 block font-semibold">Connected Store</span>
+            <span id="metricStore" class="font-medium text-slate-200 truncate">Not Connected</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-onyx-850/70 border border-slate-800">
+          <span class="text-gold-400 text-base">📦</span>
+          <div>
+            <span class="text-[10px] uppercase text-slate-400 block font-semibold">Catalog Queue</span>
+            <span id="metricProducts" class="font-medium text-slate-200">0 Products (0 Rows)</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-onyx-850/70 border border-slate-800">
+          <span class="text-gold-400 text-base">🖼️</span>
+          <div>
+            <span class="text-[10px] uppercase text-slate-400 block font-semibold">Indexed Images</span>
+            <span id="metricImages" class="font-medium text-slate-200">0 Images Ready</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-onyx-850/70 border border-slate-800">
+          <span class="text-gold-400 text-base">⚡</span>
+          <div>
+            <span class="text-[10px] uppercase text-slate-400 block font-semibold">Pipeline State</span>
+            <span id="metricState" class="font-medium text-amber-400">Step 1 Required</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- Step 1: Store Credentials -->
-    <section class="bg-[#12182B] border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Step 1: Store Credentials & Auth -->
+    <section class="bg-onyx-900 border border-gold-subtle rounded-2xl p-6 sm:p-7 shadow-2xl relative overflow-hidden transition">
+      
+      <!-- Top Title & Guide Toggle -->
       <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div class="flex items-center gap-3">
-          <div class="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold flex items-center justify-center text-xs">1</div>
-          <h2 class="font-bold text-white text-lg">Shopify Store Connection</h2>
-          <span class="text-xs text-slate-400">Works with ANY Shopify store</span>
+          <div class="w-8 h-8 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-400 font-serif font-bold flex items-center justify-center text-sm shadow-sm">1</div>
+          <div>
+            <h2 class="font-serif text-lg sm:text-xl font-bold text-white tracking-wide">Shopify Store Authentication</h2>
+            <p class="text-xs text-slate-400">Connect securely via Shopify Admin GraphQL API (Supports custom domains)</p>
+          </div>
         </div>
-        <button type="button" id="btnToggleGuide" class="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-3 py-1.5 rounded-lg transition">
-          <span>❓ How to get Admin Token?</span>
+
+        <button type="button" id="btnToggleGuide" class="text-xs text-gold-400 hover:text-gold-300 font-medium flex items-center gap-1.5 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 px-3 py-1.5 rounded-xl transition">
+          <span>🔑 How to get Admin Token?</span>
           <span id="guideArrow" class="text-[10px]">▼</span>
         </button>
       </div>
 
       <!-- Expandable Token Guide -->
-      <div id="tokenGuideBox" class="hidden mb-6 p-5 rounded-xl bg-slate-900/90 border border-blue-500/30 text-xs space-y-4 shadow-inner">
+      <div id="tokenGuideBox" class="hidden mb-6 p-5 sm:p-6 rounded-xl bg-onyx-850 border border-gold-subtle text-xs space-y-4 shadow-inner">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
           <div>
-            <h4 class="font-bold text-white text-sm flex items-center gap-2">
-              <span class="text-emerald-400">🔑</span> Admin API Access Token তৈরির নিয়ম
+            <h4 class="font-serif font-bold text-white text-base flex items-center gap-2">
+              <span class="text-gold-400">✧</span> Admin API Access Token তৈরির সহজ নিয়ম
             </h4>
-            <p class="text-slate-400 text-xs mt-0.5">নিচের ডিরেক্ট লিংকে ক্লিক করলে সরাসরি আপনার স্টোরের অ্যাপ তৈরির পেজ ওপেন হবে:</p>
+            <p class="text-slate-400 text-xs mt-0.5">নিচের লিংকে ক্লিক করে আপনার স্টোরের App Development পেজ খুলুন:</p>
           </div>
-          <a id="linkDirectAppDev" href="https://admin.shopify.com/store/le-velair-w6ickwvy/settings/apps/development" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition shadow-lg shadow-emerald-600/20 shrink-0">
+          <a id="linkDirectAppDev" href="https://admin.shopify.com/store/le-velair-w6ickwvy/settings/apps/development" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-400 text-onyx-950 font-bold text-xs transition shadow-lg shadow-gold-500/20 shrink-0">
             <span>🔗 Open App Development in Shopify</span>
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </a>
         </div>
 
-        <ol class="grid grid-cols-1 md:grid-cols-4 gap-3 text-slate-300 pt-1">
-          <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
-            <span class="font-bold text-blue-400 block mb-1">১. অ্যাপ তৈরি করুন</span>
-            উপরের লিংকে গিয়ে <span class="text-white font-medium">"Create an app"</span> বাটনে চাপ দিন এবং নাম দিন <code class="text-emerald-300 bg-slate-800 px-1 py-0.5 rounded">Catalog Importer</code>।
+        <ol class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-slate-300 pt-1">
+          <li class="bg-onyx-900/90 p-3.5 rounded-xl border border-slate-800">
+            <span class="font-bold text-gold-400 block mb-1">১. Create an App</span>
+            লিংকে গিয়ে <strong class="text-white">"Create an app"</strong> বাটনে ক্লিক করে নাম দিন <code class="text-gold-300 bg-onyx-800 px-1 py-0.5 rounded">Catalog Importer</code>।
           </li>
-          <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
-            <span class="font-bold text-blue-400 block mb-1">২. স্কোপ কনফিগার (জরুরি)</span>
-            <span class="text-white font-medium">Configuration</span> ট্যাবে যান ➔ <span class="text-blue-400 font-medium">Admin API integration</span>-এর পাশে <span class="text-white font-medium">Configure</span> চাপুন ➔ <span class="text-amber-300 font-semibold">write_products, read_products, write_files, read_files</span> টিক দিয়ে <span class="text-emerald-400 font-bold">Save</span> দিন।
+          <li class="bg-onyx-900/90 p-3.5 rounded-xl border border-slate-800">
+            <span class="font-bold text-gold-400 block mb-1">২. Configure Scopes</span>
+            <strong class="text-white">Configuration</strong> ট্যাবে গিয়ে Admin API integration-এর পাশে <strong class="text-gold-400">Configure</strong> চাপুন এবং টিক দিন:
+            <div class="mt-1 flex flex-wrap gap-1 font-mono text-[9px]">
+              <span class="px-1 rounded bg-gold-500/20 text-gold-300">write_products</span>
+              <span class="px-1 rounded bg-gold-500/20 text-gold-300">read_products</span>
+              <span class="px-1 rounded bg-gold-500/20 text-gold-300">write_files</span>
+              <span class="px-1 rounded bg-gold-500/20 text-gold-300">read_files</span>
+            </div>
           </li>
-          <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
-            <span class="font-bold text-blue-400 block mb-1">৩. Install App দিন</span>
-            <span class="text-white font-medium">API credentials</span> ট্যাবে গিয়ে <span class="text-emerald-400 font-bold">Install app</span> বাটনে ক্লিক করুন।
+          <li class="bg-onyx-900/90 p-3.5 rounded-xl border border-slate-800">
+            <span class="font-bold text-gold-400 block mb-1">৩. Install App</span>
+            Save দিয়ে <strong class="text-white">API credentials</strong> ট্যাবে গিয়ে <strong class="text-emerald-400 font-bold">Install app</strong> বাটনে চাপ দিন।
           </li>
-          <li class="bg-slate-950/60 p-3 rounded-lg border border-slate-800/80">
-            <span class="font-bold text-blue-400 block mb-1">৪. Reveal Token Once!</span>
-            একদম উপরে <span class="text-white font-medium">Admin API access token</span> সেকশনে <span class="text-amber-300 font-bold">"Reveal token once"</span> বাটনে চাপ দিলেই <code class="text-emerald-300">shpat_...</code> টোকেন পাবেন। এটি কপি করুন!
+          <li class="bg-onyx-900/90 p-3.5 rounded-xl border border-slate-800">
+            <span class="font-bold text-gold-400 block mb-1">৪. Reveal Token Once</span>
+            উপরে Admin API access token-এর ঘরে <strong class="text-gold-400 font-bold">"Reveal token once"</strong> বাটনে চাপ দিলেই <code class="text-emerald-300">shpat_...</code> টোকেন পাবেন।
           </li>
         </ol>
 
-        <!-- Troubleshooting Box -->
-        <div class="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200/90 text-xs space-y-1.5">
-          <p class="font-bold flex items-center gap-1.5 text-amber-300">
-            <span>⚠️</span> কেন আপনি শুধু Client ID এবং Client Secret দেখতে পাচ্ছেন?
-          </p>
-          <ul class="list-disc list-inside space-y-1 text-[11px] text-slate-300">
-            <li><strong>স্কোপ Save করা হয়নি:</strong> যদি ২ নম্বর ধাপে Configuration-এ গিয়ে স্কোপ Save না করে সরাসরি Install দেন, তবে Admin Access Token জেনারেট হয় না। সেক্ষেত্রে <span class="text-blue-400">Configuration</span>-এ গিয়ে পারমিশন Save করে আবার <span class="text-emerald-400">API credentials</span>-এ আসুন।</li>
-            <li><strong>Reveal Token Once মিস করেছেন:</strong> পেজের উপরে "Admin API access token"-এর পাশে থাকা <span class="text-amber-300 font-semibold">"Reveal token once"</span> বাটনে চাপ দিন। নিচের Client ID & Secret সেকশন দেখে বিভ্রান্ত হবেন না।</li>
-            <li><strong>অথবা Client Credentials ব্যবহার করুন:</strong> আপনি চাইলে সরাসরি নিচের <span class="text-blue-400 font-semibold">"Use Client ID & Secret"</span> বাটনে চাপ দিয়ে আপনার Client ID ও Client Secret ইনপুট দিয়ে কানেক্ট করতে পারেন!</li>
-          </ul>
+        <!-- Troubleshooting Notice -->
+        <div class="p-3.5 rounded-xl bg-gold-500/10 border border-gold-500/30 text-gold-200/90 text-xs">
+          <strong>💡 টিপস:</strong> আপনি যদি সরাসরি আপনার <strong>Client ID</strong> ও <strong>Client Secret</strong> ব্যবহার করতে চান, তবে নিচের "Client ID & Secret" মোড সিলেক্ট করে পেস্ট করুন—অ্যাপ নিজে থেকেই শপিফাইয়ের সাথে অথেনটিকেশন করে নেবে।
         </div>
       </div>
 
       <!-- Auth Mode Toggle -->
       <div class="flex items-center gap-2 mb-4">
         <span class="text-xs text-slate-400 font-medium mr-1">Auth Mode:</span>
-        <button type="button" id="btnModeToken" class="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold shadow-sm transition">
+        <button type="button" id="btnModeToken" class="text-xs px-3.5 py-1.5 rounded-lg bg-gold-500 text-onyx-950 font-bold shadow-md shadow-gold-500/20 transition">
           Admin Token (shpat_...)
         </button>
-        <button type="button" id="btnModeClient" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition">
-          Client ID & Secret
+        <button type="button" id="btnModeClient" class="text-xs px-3.5 py-1.5 rounded-lg bg-onyx-800 hover:bg-onyx-750 text-slate-300 font-medium transition">
+          Client ID &amp; Secret
         </button>
       </div>
 
+      <!-- Input Form -->
       <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        
+        <!-- Store Domain -->
         <div class="md:col-span-5">
           <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Store Domain</label>
-          <input type="text" id="storeDomain" placeholder="e.g. le-velair-w6ickwvy or shopify-jewelry.bssoln.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition">
+          <input type="text" id="storeDomain" placeholder="e.g. le-velair-w6ickwvy or shopify-jewelry.bssoln.com" class="w-full px-3.5 py-2.5 rounded-xl bg-onyx-850 border border-slate-700/80 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-gold-500 transition">
           <p id="resolvedDomainInfo" class="hidden mt-1.5 text-[11px] font-mono text-emerald-400"></p>
         </div>
 
         <!-- Mode A: Admin Token -->
         <div id="boxModeToken" class="md:col-span-5">
           <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Admin API Access Token</label>
-          <input type="password" id="storeToken" placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-sm font-mono focus:outline-none focus:border-blue-500 transition">
+          <input type="password" id="storeToken" placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" class="w-full px-3.5 py-2.5 rounded-xl bg-onyx-850 border border-slate-700/80 text-white placeholder-slate-500 text-sm font-mono focus:outline-none focus:border-gold-500 transition">
         </div>
 
-        <!-- Mode B: Client ID & Secret -->
-        <div id="boxModeClient" class="md:col-span-5 hidden grid grid-cols-2 gap-2">
+        <!-- Mode B: Client Credentials -->
+        <div id="boxModeClient" class="md:col-span-5 hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Client ID</label>
-            <input type="text" id="storeClientId" placeholder="Client ID / API Key" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-blue-500 transition">
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Client ID (API Key)</label>
+            <input type="text" id="storeClientId" placeholder="32-char Client ID" class="w-full px-3 py-2.5 rounded-xl bg-onyx-850 border border-slate-700/80 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-gold-500 transition">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Client Secret</label>
-            <input type="password" id="storeClientSecret" placeholder="Client Secret" class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-blue-500 transition">
+            <input type="password" id="storeClientSecret" placeholder="Client Secret" class="w-full px-3 py-2.5 rounded-xl bg-onyx-850 border border-slate-700/80 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-gold-500 transition">
           </div>
         </div>
 
+        <!-- Connect Action -->
         <div class="md:col-span-2 flex items-end">
-          <button type="button" id="btnVerify" class="w-full h-[42px] px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs tracking-wider uppercase transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
+          <button type="button" id="btnVerify" class="w-full h-[42px] px-4 rounded-xl bg-gold-500 hover:bg-gold-400 text-onyx-950 font-bold text-xs tracking-wider uppercase transition shadow-lg shadow-gold-500/20 flex items-center justify-center gap-2">
             <span>Connect</span>
           </button>
         </div>
       </div>
+
+      <!-- Verification Message -->
       <p id="storeVerifyMsg" class="mt-3 text-xs hidden"></p>
+
+      <!-- Connected Store Details Card -->
+      <div id="connectedDetailsCard" class="hidden mt-4 pt-4 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+        <div class="bg-onyx-850/60 p-2.5 rounded-lg border border-slate-800">
+          <span class="text-[10px] text-slate-400 block font-sans uppercase">Canonical Domain</span>
+          <span id="detailCanonicalDomain" class="text-gold-400 font-semibold truncate block"></span>
+        </div>
+        <div class="bg-onyx-850/60 p-2.5 rounded-lg border border-slate-800">
+          <span class="text-[10px] text-slate-400 block font-sans uppercase">Currency &amp; Country</span>
+          <span id="detailCurrencyCountry" class="text-slate-200 font-semibold block"></span>
+        </div>
+        <div class="bg-onyx-850/60 p-2.5 rounded-lg border border-slate-800">
+          <span class="text-[10px] text-slate-400 block font-sans uppercase">Shopify Plan</span>
+          <span id="detailPlan" class="text-slate-200 font-semibold block"></span>
+        </div>
+        <div class="bg-onyx-850/60 p-2.5 rounded-lg border border-slate-800">
+          <span class="text-[10px] text-slate-400 block font-sans uppercase">API Scopes</span>
+          <span class="text-emerald-400 font-semibold block">✓ write_products, files</span>
+        </div>
+      </div>
     </section>
 
-    <!-- Step 2: Upload Assets -->
+    <!-- Step 2: Asset Ingestion Suite -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
       <!-- Card A: Product CSV -->
-      <div class="bg-[#12182B] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition">
+      <div id="dropzoneCsv" class="bg-onyx-900 border border-gold-subtle rounded-2xl p-5 flex flex-col justify-between hover:border-gold-500/50 transition">
         <div>
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 2.A</span>
-            <span id="csvBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Waiting</span>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-md bg-gold-500/10 text-gold-400 flex items-center justify-center text-[10px] font-bold">2A</span>
+              Product CSV
+            </span>
+            <span id="csvBadge" class="text-[10px] px-2 py-0.5 rounded-md bg-onyx-800 text-slate-400 border border-slate-700">Waiting</span>
           </div>
-          <h3 class="font-bold text-white text-base mb-1">Product CSV</h3>
-          <p class="text-xs text-slate-400 mb-4">Shopify format CSV (Image Src can be blank)</p>
-          <label class="border-2 border-dashed border-slate-700 hover:border-blue-500 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center transition group bg-slate-900/50">
-            <svg class="w-8 h-8 text-slate-500 group-hover:text-blue-400 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <span class="text-xs font-semibold text-slate-300 group-hover:text-white">Choose CSV File</span>
-            <span class="text-[11px] text-slate-500 mt-1">.csv (e.g. pending_urls.csv)</span>
+          <h3 class="font-serif font-bold text-white text-lg mb-1">Product Catalog CSV</h3>
+          <p class="text-xs text-slate-400 mb-4">Shopify 47-column CSV (Image Src can be blank)</p>
+          
+          <label class="border-2 border-dashed border-slate-700 hover:border-gold-500 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center transition group bg-onyx-850/50">
+            <svg class="w-8 h-8 text-slate-500 group-hover:text-gold-400 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span class="text-xs font-semibold text-slate-300 group-hover:text-white">Choose or Drag CSV File</span>
+            <span class="text-[11px] text-slate-500 mt-1">.csv (e.g. fresh_test_products.csv)</span>
             <input type="file" id="fileCsv" accept=".csv" class="hidden">
           </label>
         </div>
-        <div id="csvFileInfo" class="mt-3 text-xs text-slate-400 truncate hidden"></div>
+        <div id="csvFileInfo" class="mt-3 text-xs text-gold-400 font-mono truncate hidden"></div>
       </div>
 
       <!-- Card B: Images Folder -->
-      <div class="bg-[#12182B] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition">
+      <div id="dropzoneImages" class="bg-onyx-900 border border-gold-subtle rounded-2xl p-5 flex flex-col justify-between hover:border-gold-500/50 transition">
         <div>
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 2.B</span>
-            <span id="imgBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Waiting</span>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-md bg-gold-500/10 text-gold-400 flex items-center justify-center text-[10px] font-bold">2B</span>
+              Images Folder
+            </span>
+            <span id="imgBadge" class="text-[10px] px-2 py-0.5 rounded-md bg-onyx-800 text-slate-400 border border-slate-700">Waiting</span>
           </div>
-          <h3 class="font-bold text-white text-base mb-1">Product Images</h3>
-          <p class="text-xs text-slate-400 mb-4">Select folder containing product images</p>
-          <label class="border-2 border-dashed border-slate-700 hover:border-emerald-500 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center transition group bg-slate-900/50">
-            <svg class="w-8 h-8 text-slate-500 group-hover:text-emerald-400 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <h3 class="font-serif font-bold text-white text-lg mb-1">Local Image Mockups</h3>
+          <p class="text-xs text-slate-400 mb-4">WebP or PNG folders (Hero, Lifestyle, Macro)</p>
+          
+          <label class="border-2 border-dashed border-slate-700 hover:border-gold-500 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center transition group bg-onyx-850/50">
+            <svg class="w-8 h-8 text-slate-500 group-hover:text-gold-400 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <span class="text-xs font-semibold text-slate-300 group-hover:text-white">Choose Images Folder</span>
-            <span class="text-[11px] text-slate-500 mt-1">Folders with WebP/PNG/JPG</span>
+            <span class="text-[11px] text-slate-500 mt-1">Select whole folder (sample_images)</span>
             <input type="file" id="fileImages" webkitdirectory directory multiple class="hidden">
           </label>
         </div>
-        <div id="imgFolderInfo" class="mt-3 text-xs text-slate-400 truncate hidden"></div>
+        <div id="imgFolderInfo" class="mt-3 text-xs text-emerald-400 font-mono truncate hidden"></div>
       </div>
 
-      <!-- Card C: Image URL Map -->
-      <div class="bg-[#12182B] border border-slate-800 rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition">
+      <!-- Card C: Image Position Map -->
+      <div id="dropzoneMap" class="bg-onyx-900 border border-gold-subtle rounded-2xl p-5 flex flex-col justify-between hover:border-gold-500/50 transition">
         <div>
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 2.C</span>
-            <span id="mapBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Optional</span>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="w-5 h-5 rounded-md bg-gold-500/10 text-gold-400 flex items-center justify-center text-[10px] font-bold">2C</span>
+              Position Map
+            </span>
+            <span id="mapBadge" class="text-[10px] px-2 py-0.5 rounded-md bg-onyx-800 text-slate-400 border border-slate-700">Optional</span>
           </div>
-          <h3 class="font-bold text-white text-base mb-1">Mapping CSV</h3>
-          <p class="text-xs text-slate-400 mb-4">Position map (Hero, Lifestyle, Macro)</p>
-          <label class="border-2 border-dashed border-slate-700 hover:border-purple-500 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center transition group bg-slate-900/50">
-            <svg class="w-8 h-8 text-slate-500 group-hover:text-purple-400 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-            <span class="text-xs font-semibold text-slate-300 group-hover:text-white">Choose Mapping Map</span>
-            <span class="text-[11px] text-slate-500 mt-1">Auto-matches if omitted</span>
+          <h3 class="font-serif font-bold text-white text-lg mb-1">Image Mapping CSV</h3>
+          <p class="text-xs text-slate-400 mb-4">Position mapping (Position 1, 2, 3)</p>
+          
+          <label class="border-2 border-dashed border-slate-700 hover:border-gold-500 rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center transition group bg-onyx-850/50">
+            <svg class="w-8 h-8 text-slate-500 group-hover:text-gold-400 transition mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            <span class="text-xs font-semibold text-slate-300 group-hover:text-white">Choose Mapping CSV</span>
+            <span class="text-[11px] text-slate-500 mt-1">e.g. fresh_test_mapping.csv</span>
             <input type="file" id="fileMap" accept=".csv" class="hidden">
           </label>
         </div>
-        <div id="mapFileInfo" class="mt-3 text-xs text-slate-400 truncate hidden"></div>
+        <div id="mapFileInfo" class="mt-3 text-xs text-purple-400 font-mono truncate hidden"></div>
       </div>
 
     </section>
 
     <!-- Step 3: Preflight Safety Validation -->
-    <section class="bg-[#12182B] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+    <section class="bg-onyx-900 border border-gold-subtle rounded-2xl p-6 sm:p-7 shadow-2xl space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold flex items-center justify-center text-xs">3</div>
-            <h2 class="font-bold text-white text-lg">Preflight Safety Validation</h2>
-            <span class="text-xs text-slate-400">Read-only pre-checks before writing to Shopify</span>
+            <div class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-serif font-bold flex items-center justify-center text-sm shadow-sm">3</div>
+            <h2 class="font-serif text-lg sm:text-xl font-bold text-white tracking-wide">Preflight Safety Verification</h2>
           </div>
-          <p class="text-xs text-slate-400 mt-1">Verifies store currency, CSV schema, image matching (Hero, Lifestyle, Macro), and detects existing product conflicts.</p>
+          <p class="text-xs text-slate-400 mt-1">Read-only preflight testing to verify store currency, CSV schema, image matching (Hero, Lifestyle, Macro), and detect existing store conflicts.</p>
         </div>
-        <button type="button" id="btnRunValidation" disabled class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-amber-600/20 flex items-center gap-2 shrink-0">
+        <button type="button" id="btnRunValidation" disabled class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:from-onyx-800 disabled:to-onyx-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-amber-600/20 flex items-center gap-2 shrink-0">
           <span>🔍 Run Preflight Validation</span>
         </button>
       </div>
@@ -231,23 +384,23 @@
         <!-- 4 Stat Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
           <!-- Card 1: Store & Currency -->
-          <div id="cardValStore" class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1">
+          <div id="cardValStore" class="bg-onyx-850 p-3.5 rounded-xl border border-slate-800 space-y-1">
             <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">1. Store Currency</span>
             <div id="statusValStore" class="font-medium text-slate-300">Checking...</div>
           </div>
           <!-- Card 2: CSV & Columns -->
-          <div id="cardValCsv" class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1">
-            <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">2. CSV Structure</span>
+          <div id="cardValCsv" class="bg-onyx-850 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">2. CSV Structure &amp; Status</span>
             <div id="statusValCsv" class="font-medium text-slate-300">Checking...</div>
           </div>
           <!-- Card 3: Images & Mapping -->
-          <div id="cardValImages" class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1">
+          <div id="cardValImages" class="bg-onyx-850 p-3.5 rounded-xl border border-slate-800 space-y-1">
             <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">3. Images &amp; Mapping</span>
             <div id="statusValImages" class="font-medium text-slate-300">Checking...</div>
           </div>
           <!-- Card 4: Store Conflicts -->
-          <div id="cardValConflicts" class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1">
-            <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">4. Existing Conflicts</span>
+          <div id="cardValConflicts" class="bg-onyx-850 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">4. Product Conflicts</span>
             <div id="statusValConflicts" class="font-medium text-slate-300">Checking...</div>
           </div>
         </div>
@@ -261,21 +414,22 @@
     </section>
 
     <!-- Step 4: Execution Controls -->
-    <section class="bg-[#12182B] border border-slate-800 rounded-2xl p-6 shadow-xl">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <section class="bg-onyx-900 border border-gold-subtle rounded-2xl p-6 sm:p-7 shadow-2xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div>
           <div class="flex items-center gap-3">
-            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-xs">4</div>
-            <h3 class="font-bold text-white text-base">Execution Options</h3>
+            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-serif font-bold flex items-center justify-center text-sm shadow-sm">4</div>
+            <h3 class="font-serif text-lg sm:text-xl font-bold text-white tracking-wide">Execution &amp; Staging Pipeline</h3>
           </div>
-          <div class="flex items-center gap-6 mt-3 text-xs">
+          
+          <div class="flex flex-wrap items-center gap-6 mt-3 text-xs">
             <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="chkCreateProducts" checked class="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0">
+              <input type="checkbox" id="chkCreateProducts" checked class="rounded bg-onyx-800 border-slate-700 text-gold-500 focus:ring-0">
               <span class="font-medium text-slate-200">Directly Create Products via GraphQL</span>
             </label>
             <label class="flex items-center gap-2">
               <span class="text-slate-400">Default Status:</span>
-              <select id="selStatus" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
+              <select id="selStatus" class="bg-onyx-850 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
                 <option value="DRAFT" selected>DRAFT (Safe)</option>
                 <option value="ACTIVE">ACTIVE (Live)</option>
               </select>
@@ -284,7 +438,7 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <button type="button" id="btnStart" disabled class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-600/20 flex items-center gap-2">
+          <button type="button" id="btnStart" disabled class="px-6 py-3 rounded-xl bg-gold-500 hover:bg-gold-400 disabled:bg-onyx-800 disabled:text-slate-600 disabled:cursor-not-allowed text-onyx-950 font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-gold-500/25 flex items-center gap-2">
             <span>🚀 Start Import &amp; Staging</span>
           </button>
           <button type="button" id="btnDownloadCsv" class="hidden px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-purple-600/20 flex items-center gap-2">
@@ -297,36 +451,75 @@
       <div id="progressArea" class="mt-6 hidden">
         <div class="flex items-center justify-between text-xs mb-2">
           <span id="progressStatus" class="text-slate-300 font-medium">Starting...</span>
-          <span id="progressPct" class="font-mono text-emerald-400 font-bold">0%</span>
+          <span id="progressPct" class="font-mono text-gold-400 font-bold">0%</span>
         </div>
-        <div class="w-full h-3 rounded-full bg-slate-900 overflow-hidden border border-slate-800 p-0.5">
-          <div id="progressBar" class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-300" style="width: 0%"></div>
+        <div class="w-full h-3 rounded-full bg-onyx-950 overflow-hidden border border-slate-800 p-0.5">
+          <div id="progressBar" class="h-full rounded-full bg-gradient-to-r from-gold-500 to-amber-300 transition-all duration-300" style="width: 0%"></div>
         </div>
       </div>
     </section>
 
-    <!-- Step 4: Real-time Terminal Logs -->
-    <section class="bg-black/80 border border-slate-800 rounded-2xl p-5 shadow-2xl">
-      <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800/80">
+    <!-- Step 5: Imported Products Showcase Gallery (Appears after import) -->
+    <section id="showcaseSection" class="hidden bg-onyx-900 border border-gold-subtle rounded-2xl p-6 sm:p-7 shadow-2xl space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-gold-400 text-xl">✨</span>
+            <h3 class="font-serif text-xl font-bold text-white tracking-wide">Imported Catalog Showcase</h3>
+          </div>
+          <p class="text-xs text-slate-400">Successfully staged and registered on Shopify Admin with CDN media attached.</p>
+        </div>
+        <span id="showcaseCountBadge" class="text-xs px-3 py-1 rounded-full bg-gold-500/10 text-gold-400 border border-gold-500/30 font-bold"></span>
+      </div>
+
+      <!-- Product Cards Grid -->
+      <div id="showcaseGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2"></div>
+    </section>
+
+    <!-- Step 6: Real-time Terminal Logs -->
+    <section class="bg-black/90 border border-slate-800/90 rounded-2xl p-5 shadow-2xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 mb-3 border-b border-slate-800">
         <div class="flex items-center gap-2">
           <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
           <span class="w-3 h-3 rounded-full bg-yellow-500/80 inline-block"></span>
           <span class="w-3 h-3 rounded-full bg-green-500/80 inline-block"></span>
           <span class="text-xs font-mono text-slate-400 ml-2">Console Output</span>
         </div>
-        <button type="button" id="btnClearLogs" class="text-[11px] text-slate-500 hover:text-slate-300">Clear</button>
+
+        <!-- Terminal Filter Tabs -->
+        <div class="flex items-center gap-1.5 text-[11px] font-mono">
+          <button type="button" class="log-filter-btn px-2 py-0.5 rounded bg-slate-800 text-white font-bold" data-filter="ALL">All</button>
+          <button type="button" class="log-filter-btn px-2 py-0.5 rounded hover:bg-slate-800 text-emerald-400" data-filter="SUCCESS">Success</button>
+          <button type="button" class="log-filter-btn px-2 py-0.5 rounded hover:bg-slate-800 text-amber-400" data-filter="WARN">Warn</button>
+          <button type="button" class="log-filter-btn px-2 py-0.5 rounded hover:bg-slate-800 text-rose-400" data-filter="ERROR">Error</button>
+          <span class="text-slate-700">|</span>
+          <button type="button" id="btnClearLogs" class="text-slate-400 hover:text-slate-200">Clear</button>
+        </div>
       </div>
-      <div id="consoleLog" class="font-mono text-xs space-y-1.5 max-h-80 overflow-y-auto text-slate-300 pr-2 select-text">
-        <div class="text-slate-500">[SYSTEM] Ready. Connect store and select your files to begin.</div>
+      
+      <!-- Terminal Output Scroll Box -->
+      <div id="consoleLog" class="h-56 overflow-y-auto space-y-1 text-xs font-mono pr-2">
+        <div class="text-slate-500">// Terminal initialized. Connect store and upload assets to begin.</div>
       </div>
     </section>
 
   </main>
 
-  <footer class="border-t border-slate-800/60 py-6 text-center text-xs text-slate-500">
-    Shopify Catalog Importer &bull; Bangladesh Software Solutions &bull; Multi-Store Compatible
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 py-6 mt-12 bg-onyx-950 text-slate-500 text-xs text-center font-serif">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-gold-500 font-bold">Le Velair Atelier</span>
+        <span>•</span>
+        <span class="font-sans text-[11px]">Shopify Enterprise Media &amp; Product Engine</span>
+      </div>
+      <div class="font-sans text-[11px] text-slate-500">
+        Designed for High-Volume Catalog Staging &amp; GraphQL Direct Execution
+      </div>
+    </div>
   </footer>
 
+  <!-- App Script -->
   <script src="/app.js"></script>
 </body>
 </html>
