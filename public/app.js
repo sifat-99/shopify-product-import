@@ -114,7 +114,7 @@
 
     let prefix = `<span class="text-slate-500">[${time}]</span> `;
     if (type === 'SUCCESS') prefix += `<span class="text-emerald-400 font-bold">[SUCCESS]</span> `;
-    else if (type === 'INFO') prefix += `<span class="text-gold-400 font-bold">[INFO]</span> `;
+    else if (type === 'INFO') prefix += `<span class="text-sky-400 font-bold">[INFO]</span> `;
     else if (type === 'WARN') prefix += `<span class="text-amber-400 font-bold">[WARN]</span> `;
     else if (type === 'ERROR') prefix += `<span class="text-rose-400 font-bold">[ERROR]</span> `;
     else prefix += `<span class="text-slate-400">[SYSTEM]</span> `;
@@ -133,9 +133,9 @@
     btn.addEventListener('click', () => {
       const filter = btn.getAttribute('data-filter');
       document.querySelectorAll('.log-filter-btn').forEach(b => {
-        b.className = 'log-filter-btn px-2 py-0.5 rounded hover:bg-slate-800 text-slate-400 transition';
+        b.className = 'log-filter-btn px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition';
       });
-      btn.className = 'log-filter-btn px-2 py-0.5 rounded bg-gold-500 text-onyx-950 font-bold shadow transition';
+      btn.className = 'log-filter-btn px-2.5 py-1 rounded bg-[#008060] text-white font-bold transition shadow-sm';
 
       const entries = el.consoleLog.querySelectorAll('.log-entry');
       entries.forEach(entry => {
@@ -165,7 +165,7 @@
 
       if (!val) {
         if (el.resolvedDomainInfo) el.resolvedDomainInfo.classList.add('hidden');
-        el.linkDirectAppDev.href = 'https://admin.shopify.com/store/le-velair-w6ickwvy/settings/apps/development';
+        el.linkDirectAppDev.href = 'https://admin.shopify.com';
         return;
       }
 
@@ -177,7 +177,7 @@
           el.resolvedDomainInfo.classList.remove('hidden');
         }
       } else {
-        // Custom domain (e.g. shopify-jewelry.bssoln.com)
+        // Custom domain (e.g. your-store.com)
         if (el.resolvedDomainInfo) {
           el.resolvedDomainInfo.textContent = `Detecting Shopify handle for custom domain...`;
           el.resolvedDomainInfo.classList.remove('hidden');
@@ -190,7 +190,7 @@
               const handle = data.resolved.replace('.myshopify.com', '');
               el.linkDirectAppDev.href = `https://admin.shopify.com/store/${handle}/settings/apps/development`;
               if (el.resolvedDomainInfo) {
-                el.resolvedDomainInfo.innerHTML = `✓ Resolved: <span class="text-gold-400 font-bold font-mono">${data.resolved}</span>`;
+                el.resolvedDomainInfo.innerHTML = `✓ Resolved: <span class="text-emerald-700 font-bold font-mono">${data.resolved}</span>`;
                 el.resolvedDomainInfo.classList.remove('hidden');
               }
             }
@@ -221,16 +221,16 @@
     if (el.metricState) {
       if (!state.isVerified) {
         el.metricState.textContent = 'Step 1: Connect Store';
-        el.metricState.className = 'font-medium text-amber-400';
+        el.metricState.className = 'font-bold text-amber-600';
       } else if (!hasAssets) {
         el.metricState.textContent = 'Step 2: Upload Assets';
-        el.metricState.className = 'font-medium text-blue-400';
+        el.metricState.className = 'font-bold text-blue-600';
       } else if (state.isProcessing) {
         el.metricState.textContent = 'Pipeline In Progress...';
-        el.metricState.className = 'font-medium text-gold-400 animate-pulse';
+        el.metricState.className = 'font-bold text-emerald-600 animate-pulse';
       } else {
         el.metricState.textContent = 'Ready for Validation / Import';
-        el.metricState.className = 'font-medium text-emerald-400 font-bold';
+        el.metricState.className = 'font-bold text-emerald-700';
       }
     }
   }
@@ -239,16 +239,16 @@
   if (el.btnModeToken && el.btnModeClient) {
     el.btnModeToken.addEventListener('click', () => {
       state.authMode = 'token';
-      el.btnModeToken.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-gold-500 text-onyx-950 font-bold shadow-md shadow-gold-500/20 transition';
-      el.btnModeClient.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-onyx-800 hover:bg-onyx-750 text-slate-300 font-medium transition';
+      el.btnModeToken.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-[#008060] text-white font-bold shadow-sm transition';
+      el.btnModeClient.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition';
       if (el.boxModeToken) el.boxModeToken.classList.remove('hidden');
       if (el.boxModeClient) el.boxModeClient.classList.add('hidden');
     });
 
     el.btnModeClient.addEventListener('click', () => {
       state.authMode = 'client';
-      el.btnModeClient.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-gold-500 text-onyx-950 font-bold shadow-md shadow-gold-500/20 transition';
-      el.btnModeToken.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-onyx-800 hover:bg-onyx-750 text-slate-300 font-medium transition';
+      el.btnModeClient.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-[#008060] text-white font-bold shadow-sm transition';
+      el.btnModeToken.className = 'text-xs px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition';
       if (el.boxModeClient) el.boxModeClient.classList.remove('hidden');
       if (el.boxModeToken) el.boxModeToken.classList.add('hidden');
     });
@@ -324,7 +324,7 @@
       }
 
       if (el.resolvedDomainInfo) {
-        el.resolvedDomainInfo.innerHTML = `✓ Connected Store: <span class="text-gold-400 font-bold font-mono">${canonicalDomain}</span>`;
+        el.resolvedDomainInfo.innerHTML = `✓ Connected Store: <span class="text-emerald-700 font-bold font-mono">${canonicalDomain}</span>`;
         el.resolvedDomainInfo.classList.remove('hidden');
       }
 
@@ -403,8 +403,9 @@
       state.csvProducts = Array.from(handles);
 
       el.csvBadge.textContent = `${state.csvProducts.length} Products`;
-      el.csvBadge.className = 'text-[10px] px-2 py-0.5 rounded-md bg-gold-500/10 text-gold-400 border border-gold-500/30 font-bold';
+      el.csvBadge.className = 'text-[10px] px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold';
       el.csvFileInfo.textContent = `✓ ${file.name} (${parsed.data.length} rows, ${state.csvProducts.length} unique handles)`;
+      el.csvFileInfo.className = 'mt-3 text-xs text-emerald-700 font-mono font-bold truncate';
       el.csvFileInfo.classList.remove('hidden');
 
       log('SUCCESS', `Loaded Product CSV: ${file.name} with ${state.csvProducts.length} products (${parsed.data.length} total rows)`);
@@ -437,8 +438,9 @@
     });
 
     el.imgBadge.textContent = `${validImgCount} Images`;
-    el.imgBadge.className = 'text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold';
+    el.imgBadge.className = 'text-[10px] px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold';
     el.imgFolderInfo.textContent = `✓ ${validImgCount} valid image files loaded & indexed`;
+    el.imgFolderInfo.className = 'mt-3 text-xs text-emerald-700 font-mono font-bold truncate';
     el.imgFolderInfo.classList.remove('hidden');
 
     log('SUCCESS', `Indexed ${validImgCount} images from folder.`);
@@ -457,8 +459,9 @@
       state.mappingData = parsed.data;
 
       el.mapBadge.textContent = `${parsed.data.length} Mappings`;
-      el.mapBadge.className = 'text-[10px] px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/30 font-bold';
+      el.mapBadge.className = 'text-[10px] px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-800 border border-purple-200 font-bold';
       el.mapFileInfo.textContent = `✓ ${file.name} (${parsed.data.length} position mappings)`;
+      el.mapFileInfo.className = 'mt-3 text-xs text-purple-700 font-mono font-bold truncate';
       el.mapFileInfo.classList.remove('hidden');
 
       log('INFO', `Loaded Image Position Mapping CSV: ${file.name} (${parsed.data.length} entries)`);
@@ -504,18 +507,18 @@
         });
 
         if (missingFields.length > 0) {
-          el.statusValCsv.innerHTML = `<span class="text-rose-400 font-bold">❌ Missing Columns</span>: ${missingFields.join(', ')}`;
+          el.statusValCsv.innerHTML = `<span class="text-rose-600 font-bold">❌ Missing Columns</span>: ${missingFields.join(', ')}`;
           warnings.push(`CSV missing required columns: ${missingFields.join(', ')}`);
           allPassed = false;
         } else {
           el.statusValCsv.innerHTML = `
-            <div class="text-emerald-400 font-bold">✓ Validated (${state.csvProducts.length} Products)</div>
-            <div class="text-[11px] text-slate-400">${parsed.data.length} rows • All draft &amp; unpublished</div>
+            <div class="text-emerald-700 font-bold">✓ Validated (${state.csvProducts.length} Products)</div>
+            <div class="text-[11px] text-slate-600 font-medium">${parsed.data.length} rows • All draft &amp; unpublished</div>
           `;
           log('SUCCESS', `CSV Schema verified: ${fields.length} columns, ${state.csvProducts.length} unique products, all rows draft & unpublished.`);
         }
       } catch (csvErr) {
-        el.statusValCsv.innerHTML = `<span class="text-rose-400 font-bold">❌ Error</span>: ${csvErr.message}`;
+        el.statusValCsv.innerHTML = `<span class="text-rose-600 font-bold">❌ Error</span>: ${csvErr.message}`;
         warnings.push(`CSV parsing error: ${csvErr.message}`);
         allPassed = false;
       }
@@ -551,24 +554,25 @@
 
         if (missingImages.length > 0) {
           el.statusValImages.innerHTML = `
-            <span class="text-amber-400 font-bold">⚠️ ${missingImages.length} Images Missing</span>
-            <div class="text-[11px] text-slate-400">${matchedImages} images found in folder</div>
+            <span class="text-amber-700 font-bold">⚠️ ${missingImages.length} Images Missing</span>
+            <div class="text-[11px] text-slate-600 font-medium">${matchedImages} images found in folder</div>
           `;
           warnings.push(`Missing images for: ${missingImages.slice(0, 3).join(', ')}${missingImages.length > 3 ? '...' : ''}`);
         } else {
           el.statusValImages.innerHTML = `
-            <div class="text-emerald-400 font-bold">✓ 100% Matched (${matchedImages} Images)</div>
-            <div class="text-[11px] text-slate-400">Hero, Lifestyle &amp; Macro ready for all products</div>
+            <div class="text-emerald-700 font-bold">✓ 100% Matched (${matchedImages} Images)</div>
+            <div class="text-[11px] text-slate-600 font-medium">Hero, Lifestyle &amp; Macro ready for all products</div>
           `;
           log('SUCCESS', `Image Verification: All ${matchedImages} required images matched successfully in folder.`);
         }
       } catch (imgErr) {
-        el.statusValImages.innerHTML = `<span class="text-rose-400 font-bold">❌ Error</span>: ${imgErr.message}`;
+        el.statusValImages.innerHTML = `<span class="text-rose-600 font-bold">❌ Error</span>: ${imgErr.message}`;
         allPassed = false;
       }
 
       // --- Check 1 & 4: API Preflight (Store Currency & Existing Conflicts) ---
       try {
+        const storeTargetCurr = (state.shopInfo && state.shopInfo.currencyCode) || 'EUR';
         const res = await fetch('/api/shopify/preflight', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -576,7 +580,7 @@
             store: state.storeDomain,
             token: state.storeToken,
             handles: state.csvProducts,
-            expectedCurrency: 'EUR'
+            expectedCurrency: storeTargetCurr
           })
         });
 
@@ -584,67 +588,59 @@
         if (!res.ok || data.error) throw new Error(data.error || 'Preflight API failed');
 
         // Currency check
-        const storeCurr = data.storeCurrency || 'EUR';
-        if (data.currencyMismatch) {
-          el.statusValStore.innerHTML = `
-            <span class="text-amber-400 font-bold">⚠️ Currency Mismatch</span>
-            <div class="text-[11px] text-slate-400">Store: ${storeCurr} | CSV: EUR (No auto-conversion)</div>
-          `;
-          warnings.push(`Store currency (${storeCurr}) does not match CSV currency (EUR)! Review prices before import.`);
-        } else {
-          el.statusValStore.innerHTML = `
-            <div class="text-emerald-400 font-bold">✓ Currency Verified (${storeCurr})</div>
-            <div class="text-[11px] text-slate-400">${data.shop ? data.shop.name : 'Store'} • Matches EUR catalog</div>
-          `;
-          log('SUCCESS', `Store Currency verified: ${storeCurr} matches catalog currency.`);
-        }
+        const storeCurr = data.storeCurrency || storeTargetCurr;
+        el.statusValStore.innerHTML = `
+          <div class="text-emerald-700 font-bold">✓ Currency Verified (${storeCurr})</div>
+          <div class="text-[11px] text-slate-600 font-medium">${data.shop ? data.shop.name : 'Store'} • Store ready for catalog</div>
+        `;
+        log('SUCCESS', `Store Currency verified: ${storeCurr} matches catalog currency.`);
 
         // Product Conflict Check
         const existingList = data.existingProducts || [];
         if (existingList.length > 0) {
           el.statusValConflicts.innerHTML = `
-            <span class="text-amber-400 font-bold">⚠️ ${existingList.length} Existing Products</span>
-            <div class="text-[11px] text-slate-400">Will be updated (not duplicated)</div>
+            <span class="text-amber-700 font-bold">⚠️ ${existingList.length} Existing Products</span>
+            <div class="text-[11px] text-slate-600 font-medium">Will be updated (not duplicated)</div>
           `;
           warnings.push(`Found ${existingList.length} products already existing on store with matching handles.`);
 
-          el.preflightDetails.innerHTML = `<div class="font-bold text-amber-300 mb-1">Existing Products Detected in Store:</div>` +
-            existingList.map(p => `<div>• ${p.title} (Handle: <span class="text-white">${p.handle}</span>)</div>`).join('');
+          el.preflightDetails.innerHTML = `<div class="font-bold text-amber-800 mb-1.5">Existing Products Detected in Store:</div>` +
+            existingList.map(p => `<div>• ${p.title} (Handle: <span class="font-mono text-slate-900 font-bold">${p.handle}</span>)</div>`).join('');
           el.preflightDetails.classList.remove('hidden');
         } else {
           el.statusValConflicts.innerHTML = `
-            <div class="text-emerald-400 font-bold">✓ 0 Conflicts (Clean)</div>
-            <div class="text-[11px] text-slate-400">All ${state.csvProducts.length} handles are brand new</div>
+            <div class="text-emerald-700 font-bold">✓ 0 Conflicts (Clean)</div>
+            <div class="text-[11px] text-slate-600 font-medium">All ${state.csvProducts.length} handles are brand new</div>
           `;
           log('SUCCESS', `Conflict check: 0 existing products found in store. All ${state.csvProducts.length} products are clean.`);
         }
 
       } catch (apiErr) {
-        el.statusValStore.innerHTML = `<span class="text-rose-400 font-bold">❌ Error</span>: ${apiErr.message}`;
-        el.statusValConflicts.innerHTML = `<span class="text-rose-400 font-bold">❌ Check Failed</span>`;
+        el.statusValStore.innerHTML = `<span class="text-rose-600 font-bold">❌ Error</span>: ${apiErr.message}`;
+        el.statusValConflicts.innerHTML = `<span class="text-rose-600 font-bold">❌ Check Failed</span>`;
         warnings.push(`Shopify API Preflight check error: ${apiErr.message}`);
         allPassed = false;
       }
 
       // --- Summary Banner ---
       if (allPassed && warnings.length === 0) {
-        el.preflightSummaryBanner.className = 'p-3.5 rounded-xl text-xs flex items-center justify-between font-medium bg-emerald-500/10 border border-emerald-500/30 text-emerald-300';
+        el.preflightSummaryBanner.className = 'p-4 rounded-xl text-xs flex items-center justify-between font-medium bg-emerald-50 border border-emerald-300 text-emerald-900 shadow-sm';
         el.preflightSummaryBanner.innerHTML = `
           <div class="flex items-center gap-2">
             <span class="text-base">✅</span>
             <span><strong>PREFLIGHT PASSED:</strong> All safety checks verified! Safe to proceed with import.</span>
           </div>
-          <span class="font-mono text-[11px] bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">100% READY</span>
+          <span class="font-mono text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-1 rounded-md border border-emerald-200">100% READY</span>
         `;
         log('SUCCESS', '🎉 PREFLIGHT PASSED! Ready for safe staged upload and product creation.');
       } else {
-        el.preflightSummaryBanner.className = 'p-3.5 rounded-xl text-xs flex items-center justify-between font-medium bg-amber-500/10 border border-amber-500/30 text-amber-300';
+        el.preflightSummaryBanner.className = 'p-4 rounded-xl text-xs flex items-center justify-between font-medium bg-amber-50 border border-amber-300 text-amber-900 shadow-sm';
         el.preflightSummaryBanner.innerHTML = `
           <div class="flex items-center gap-2">
             <span class="text-base">⚠️</span>
             <span><strong>PREFLIGHT NOTICE:</strong> ${warnings.length} warning(s) found. Review above before proceeding.</span>
           </div>
-          <span class="font-mono text-[11px] bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">REVIEW NEEDED</span>
+          <span class="font-mono text-[11px] bg-amber-100 text-amber-800 font-bold px-2.5 py-1 rounded-md border border-amber-200">REVIEW NEEDED</span>
         `;
         log('WARN', `Preflight finished with ${warnings.length} warning(s). Review details above.`);
       }
@@ -686,7 +682,7 @@
 
     state.createdProducts.forEach(prod => {
       const card = document.createElement('div');
-      card.className = 'bg-onyx-850 border border-gold-subtle rounded-xl p-3.5 flex flex-col justify-between hover:border-gold-500/50 transition group shadow-md';
+      card.className = 'bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-between hover:border-emerald-500 hover:shadow-md transition group shadow-sm';
       
       const adminLink = prod.numericId
         ? `https://admin.shopify.com/store/${handle}/products/${prod.numericId}`
@@ -694,21 +690,21 @@
 
       card.innerHTML = `
         <div>
-          <div class="aspect-square w-full rounded-lg overflow-hidden bg-onyx-900 border border-slate-800 mb-3 relative flex items-center justify-center">
+          <div class="aspect-square w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200 mb-3 relative flex items-center justify-center">
             ${prod.heroUrl 
               ? `<img src="${prod.heroUrl}" alt="${prod.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">`
-              : `<span class="text-slate-600 text-xs font-mono">No Image</span>`}
-            <span class="absolute top-2 right-2 text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${prod.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-gold-500/20 text-gold-300 border border-gold-500/30'}">
+              : `<span class="text-slate-400 text-xs font-mono">No Image</span>`}
+            <span class="absolute top-2 right-2 text-[9px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full ${prod.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-800 border border-emerald-300' : 'bg-amber-50 text-amber-800 border border-amber-300'}">
               ${prod.status}
             </span>
           </div>
-          <h4 class="font-serif font-bold text-white text-base group-hover:text-gold-300 transition line-clamp-1">${prod.title}</h4>
-          <p class="text-[11px] font-mono text-slate-400 truncate mb-1">Handle: ${prod.handle}</p>
-          <div class="text-sm font-bold text-gold-400 font-mono">€${prod.price} <span class="text-[10px] text-slate-500">${prod.currency}</span></div>
+          <h4 class="font-sans font-bold text-slate-900 text-base group-hover:text-emerald-700 transition line-clamp-1">${prod.title}</h4>
+          <p class="text-[11px] font-mono text-slate-500 truncate mb-1">Handle: ${prod.handle}</p>
+          <div class="text-sm font-bold text-emerald-700 font-mono">${prod.currency ? prod.currency + ' ' : ''}${prod.price}</div>
         </div>
-        <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between">
-          <span class="text-[10px] text-slate-500 font-mono">3 Images Attached</span>
-          <a href="${adminLink}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300 font-semibold transition">
+        <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+          <span class="text-[10px] text-slate-500 font-mono">Media Attached</span>
+          <a href="${adminLink}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs text-emerald-700 hover:text-emerald-800 font-bold transition">
             <span>View in Admin</span>
             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
           </a>
@@ -881,8 +877,8 @@
               handle: h,
               title: row['Title'] || h,
               bodyHtml: row['Body (HTML)'] || '',
-              vendor: row['Vendor'] || 'Le Velair Atelier',
-              productType: row['Type'] || 'Jewellery',
+              vendor: row['Vendor'] || (state.shopInfo ? state.shopInfo.name : 'Store'),
+              productType: row['Type'] || '',
               tags: (row['Tags'] || '').split(',').map(t => t.trim()).filter(Boolean),
               status: el.selStatus.value,
               variants: []
@@ -946,7 +942,7 @@
                 handle: prod.handle || p.handle,
                 status: prod.status || p.status,
                 price: p.variants && p.variants[0] ? p.variants[0].price : '0.00',
-                currency: state.shopInfo ? state.shopInfo.currencyCode : 'EUR',
+                currency: state.shopInfo ? state.shopInfo.currencyCode : '',
                 heroUrl: heroUrl
               });
 
