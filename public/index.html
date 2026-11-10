@@ -210,11 +210,64 @@
 
     </section>
 
-    <!-- Step 3: Execution Controls -->
+    <!-- Step 3: Preflight Safety Validation -->
+    <section class="bg-[#12182B] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold flex items-center justify-center text-xs">3</div>
+            <h2 class="font-bold text-white text-lg">Preflight Safety Validation</h2>
+            <span class="text-xs text-slate-400">Read-only pre-checks before writing to Shopify</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Verifies store currency, CSV schema, image matching (Hero, Lifestyle, Macro), and detects existing product conflicts.</p>
+        </div>
+        <button type="button" id="btnRunValidation" disabled class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-amber-600/20 flex items-center gap-2 shrink-0">
+          <span>🔍 Run Preflight Validation</span>
+        </button>
+      </div>
+
+      <!-- Preflight Results Area (Hidden until run) -->
+      <div id="preflightResults" class="hidden pt-4 border-t border-slate-800 space-y-3">
+        <!-- 4 Stat Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <!-- Card 1: Store & Currency -->
+          <div id="cardValStore" class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">1. Store Currency</span>
+            <div id="statusValStore" class="font-medium text-slate-300">Checking...</div>
+          </div>
+          <!-- Card 2: CSV & Columns -->
+          <div id="cardValCsv" class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">2. CSV Structure</span>
+            <div id="statusValCsv" class="font-medium text-slate-300">Checking...</div>
+          </div>
+          <!-- Card 3: Images & Mapping -->
+          <div id="cardValImages" class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">3. Images &amp; Mapping</span>
+            <div id="statusValImages" class="font-medium text-slate-300">Checking...</div>
+          </div>
+          <!-- Card 4: Store Conflicts -->
+          <div id="cardValConflicts" class="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800 space-y-1">
+            <span class="text-slate-400 font-semibold block text-[11px] uppercase tracking-wider">4. Existing Conflicts</span>
+            <div id="statusValConflicts" class="font-medium text-slate-300">Checking...</div>
+          </div>
+        </div>
+
+        <!-- Summary Banner -->
+        <div id="preflightSummaryBanner" class="p-3.5 rounded-xl text-xs flex items-center justify-between font-medium"></div>
+
+        <!-- Detailed Warning/Conflict List -->
+        <div id="preflightDetails" class="hidden p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs font-mono space-y-1"></div>
+      </div>
+    </section>
+
+    <!-- Step 4: Execution Controls -->
     <section class="bg-[#12182B] border border-slate-800 rounded-2xl p-6 shadow-xl">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h3 class="font-bold text-white text-base mb-1">Execution Options</h3>
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-xs">4</div>
+            <h3 class="font-bold text-white text-base">Execution Options</h3>
+          </div>
           <div class="flex items-center gap-6 mt-3 text-xs">
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" id="chkCreateProducts" checked class="rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-0">

@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { verifyStore, createStagedUploads, createFiles, setProduct, resolveShopifyDomain } = require('../lib/shopify');
+const { verifyStore, createStagedUploads, createFiles, setProduct, resolveShopifyDomain, checkExistingProducts } = require('../lib/shopify');
 const { enrichCsvWithImageUrls } = require('../lib/csvHelper');
 
 const app = express();
@@ -19,6 +19,36 @@ app.use(express.static(path.join(__dirname, '../public')));
  */
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'Shopify Catalog Importer' });
+});
+
+/**
+ * Preflight validation check (Store currency, permissions, existing product handles)
+ */
+app.post('/api/shopify/preflight', async (req, res) => {
+  try {
+    const { store, token, handles, expectedCurrency } = req.body;
+    if (!store || !token) {
+      return res.status(400).json({ error: 'Store domain and Admin token are required for preflight check.' });
+    }
+
+    // 1. Verify store & read-only shop info
+    const shop = await verifyStore(store, token);
+    const storeCurrency = shop.currencyCode;
+    const currencyMismatch = expectedCurrency && storeCurrency && expectedCurrency.toUpperCase() !== storeCurrency.toUpperCase();
+
+    // 2. Check if handles exist in store
+    const existing = await checkExistingProducts(store, token, handles || []);
+
+    res.json({
+      success: true,
+      shop,
+      storeCurrency,
+      currencyMismatch,
+      existingProducts: existing
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /**
